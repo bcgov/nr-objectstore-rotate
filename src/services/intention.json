@@ -1,0 +1,22 @@
+{
+    "event": {
+      "provider": "vault-vsync",
+      "reason": "Job triggered",
+      "url": "JOB_URL"
+    },
+    "actions": [
+      {
+        "action": "server-access",
+        "id": "login",
+        "provision": ["token/self"],
+        "service": {
+          "name": "vsync",
+          "project": "vault",
+          "environment": "production"
+        }
+      }
+    ],
+    "user": {
+      "name": "gruan@azureidir"
+    }
+  }
