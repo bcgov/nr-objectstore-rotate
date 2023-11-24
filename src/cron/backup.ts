@@ -63,7 +63,7 @@ export async function backup(db: DatabaseService) {
         name: BROKER_USER,
       },
     });
-    const actionToken = openResponse.actions['backup'].id;
+    const actionToken = openResponse.actions['backup'].token;
     const vaultAccessToken = await brokerService.provisionToken(actionToken);
     const vault = new VaultService(vaultAccessToken);
     const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
