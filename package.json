@@ -1,7 +1,7 @@
 {
-  "name": "vault-cron",
+  "name": "nr-objectstore-rotate",
   "version": "1.0.0",
-  "description": "Scheduled activities for Vault",
+  "description": "Sidecar for rotating log files to objectstore",
   "main": "index.js",
   "scripts": {
     "build": "tsc -p .",
@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "dependencies": {
     "axios": "^1.6.2",
     "cron": "^3.1.6",

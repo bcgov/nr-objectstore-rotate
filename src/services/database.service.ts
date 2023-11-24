@@ -1,8 +1,12 @@
 import * as path from 'path';
 import sqlite3 from 'sqlite3';
-import { LOGS_DIRECTORY, LOGROTATE_STATUSFILE } from '../constants';
+import {
+  LOGROTATE_DIRECTORY,
+  LOGROTATE_STATUSFILE,
+  DB_FILE_STATUS,
+} from '../constants';
 
-const databasePath = path.join(LOGS_DIRECTORY, LOGROTATE_STATUSFILE);
+const databasePath = path.join(LOGROTATE_DIRECTORY, LOGROTATE_STATUSFILE);
 
 export class DatabaseService {
   private db: sqlite3.Database;
@@ -24,7 +28,7 @@ export class DatabaseService {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           basename TEXT,
           path TEXT,
-          sync INT
+          status INT
           )
           `,
           (error: Error | null) => {
@@ -36,12 +40,26 @@ export class DatabaseService {
     });
   }
   // Insert data into the table
-  async insertValues(basename: string, path: string, sync: boolean) {
-    const insertStatement = this.db.prepare(
-      'INSERT INTO logs (basename, path, sync) VALUES (?, ?, ?)',
+  async addLog(basename: string, path: string, status = DB_FILE_STATUS.Moved) {
+    const statement = this.db.prepare(
+      'INSERT INTO logs (basename, path, status) VALUES (?, ?, ?)',
     );
-    insertStatement.run(basename, path, sync ? 1 : 0);
-    insertStatement.finalize();
+    statement.run(basename, path, status);
+    statement.finalize();
+  }
+
+  deleteLog(id: number) {
+    const statement = this.db.prepare('DELETE FROM logs WHERE id = ?');
+    statement.run(id);
+    statement.finalize();
+  }
+
+  async bulkStatusChange(fromStatus: DB_FILE_STATUS, toStatus: DB_FILE_STATUS) {
+    const updateStatement = this.db.prepare(
+      'UPDATE logs SET status = ? WHERE status = ?',
+    );
+    updateStatement.run(toStatus, fromStatus);
+    updateStatement.finalize();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
