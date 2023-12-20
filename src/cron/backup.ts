@@ -91,7 +91,18 @@ async function backupWithSecret(
   const client = getClient(secret);
   const files = [];
   for (const row of dbResult.rows) {
-    client.fPutObject(OBJECT_STORAGE_BUCKET, path.basename(row.path), row.path);
+    try {
+      const response = await client.fPutObject(
+        OBJECT_STORAGE_BUCKET,
+        path.basename(row.path),
+        row.path,
+      );
+      console.log(response);
+    } catch (err) {
+      const info = { file: row.path, message: err};
+      console.log(info);
+      continue;
+    }
     db.query<{
       id: number;
       basename: string;
