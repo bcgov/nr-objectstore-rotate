@@ -99,7 +99,7 @@ async function backupWithSecret(
       );
       console.log(response);
     } catch (err) {
-      const info = { file: row.path, message: err};
+      const info = { file: row.path, message: err };
       console.log(info);
       continue;
     }
