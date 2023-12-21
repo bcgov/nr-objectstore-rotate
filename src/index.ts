@@ -11,7 +11,7 @@ import {
 import { backup } from './cron/backup';
 import { DatabaseService } from './services/database.service';
 import { rotateLogs } from './cron/rotate';
-import { removeOldLogs } from './cron/janitor';
+import { removeOldLogs, syncLogsDb } from './cron/janitor';
 import { compress } from './cron/compress';
 
 console.log('Starting...');
@@ -41,6 +41,7 @@ async function main() {
     await backup(db);
   });
   const janitorJob = Cron(CRON_JANITOR, async () => {
+    await syncLogsDb(db);
     await removeOldLogs(db);
   });
   console.log(`Rotate job next run: ${rotateJob.nextRun()}`);
