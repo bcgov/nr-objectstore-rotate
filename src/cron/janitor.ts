@@ -4,7 +4,7 @@ import { DB_FILE_STATUS, JANITOR_COPIES } from '../constants';
 import { DatabaseService } from '../services/database.service';
 
 export async function syncLogsDb(db: DatabaseService) {
-  console.log('janitor: sync logs with DB records');
+  console.log('janitor: sync database records');
   const result = await db.query<{
     id: number;
     basename: string;
@@ -13,17 +13,16 @@ export async function syncLogsDb(db: DatabaseService) {
     `
     SELECT id, basename, path
     FROM logs
-    WHERE status = ?
+    WHERE status >= 0
     ORDER BY id DESC
     `,
-    [DB_FILE_STATUS.CopiedToObjectStore],
   );
   for (const row of result.rows) {
     try {
       const filePath = row.path;
       fs.openSync(`${filePath}`, 'r');
     } catch (err) {
-      console.log(`Delete db row id with missing log: ${row.id}`);
+      console.log(`janitor: delete database row ${row.id}`);
       db.deleteLog(row.id);
     }
   }
