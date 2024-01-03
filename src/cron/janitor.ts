@@ -19,10 +19,11 @@ export async function syncLogsDb(db: DatabaseService) {
   );
   for (const row of result.rows) {
     try {
-      const filePath = row.path;
-      fs.openSync(`${filePath}`, 'r');
+      fs.openSync(`${row.path}`, 'r');
     } catch (err) {
-      console.log(`janitor: delete database row ${row.id}`);
+      console.log(
+        `janitor: delete database row ${row.id}; file missing: ${row.path}`,
+      );
       db.deleteLog(row.id);
     }
   }
