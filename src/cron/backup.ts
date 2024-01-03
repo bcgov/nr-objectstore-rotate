@@ -5,7 +5,10 @@ import * as stream from 'stream/promises';
 
 import { getClient } from '../services/minio';
 import {
+  BROKER_ENVIRONMENT,
   BROKER_JWT,
+  BROKER_PROJECT,
+  BROKER_SERVICE,
   BROKER_USER,
   DB_FILE_STATUS,
   OBJECT_STORAGE_BUCKET,
@@ -42,38 +45,43 @@ export async function backup(db: DatabaseService) {
     await backupWithSecret(db, OBJECT_STORAGE_SECRET_KEY, result);
   } else {
     const brokerService = new BrokerService(BROKER_JWT);
-    const openResponse = await brokerService.open({
-      event: {
-        provider: 'nr-objectstore-backup',
-        reason: 'Cron triggered',
-      },
-      actions: [
-        {
-          action: 'backup',
-          id: 'backup',
-          provision: ['token/self'],
-          service: {
-            name: 'vsync',
-            project: 'vault',
-            environment: 'production',
-          },
+    try {
+      const openResponse = await brokerService.open({
+        event: {
+          provider: 'nr-objectstore-rotate-backup',
+          reason: 'Cron triggered',
         },
-      ],
-      user: {
-        name: BROKER_USER,
-      },
-    });
-    const actionToken = openResponse.actions['backup'].token;
-    const vaultAccessToken = await brokerService.provisionToken(actionToken);
-    const vault = new VaultService(vaultAccessToken);
-    const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
-    const secretKey = objectStorageCreds[VAULT_CRED_KEY];
-    vault.revokeToken();
-    const backupFiles = await backupWithSecret(db, secretKey, result);
-    for (const fileObj of backupFiles) {
-      await brokerService.attachArtifact(actionToken, fileObj);
+        actions: [
+          {
+            action: 'backup',
+            id: 'backup',
+            provision: ['token/self'],
+            service: {
+              name: BROKER_SERVICE,
+              project: BROKER_PROJECT,
+              environment: BROKER_ENVIRONMENT,
+            },
+          },
+        ],
+        user: {
+          name: BROKER_USER,
+        },
+      });
+      const actionToken = openResponse.actions['backup'].token;
+      const vaultAccessToken = await brokerService.provisionToken(actionToken);
+      const vault = new VaultService(vaultAccessToken);
+      const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
+      const secretKey = objectStorageCreds[VAULT_CRED_KEY];
+      vault.revokeToken();
+      const backupFiles = await backupWithSecret(db, secretKey, result);
+      for (const fileObj of backupFiles) {
+        await brokerService.attachArtifact(actionToken, fileObj);
+      }
+      brokerService.close(true);
+    } catch (e: any) {
+      // Error!
+      console.log(e);
     }
-    brokerService.close(true);
   }
 }
 
