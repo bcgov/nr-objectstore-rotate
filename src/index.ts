@@ -35,9 +35,11 @@ async function main() {
     await rotateLogs(db);
   });
   const compressJob = Cron(CRON_COMPRESS, async () => {
+    await syncLogsDb(db);
     await compress(db);
   });
   const backupJob = Cron(CRON_BACKUP, async () => {
+    await syncLogsDb(db);
     await backup(db);
   });
   const janitorJob = Cron(CRON_JANITOR, async () => {
