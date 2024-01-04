@@ -5,7 +5,7 @@ import { DatabaseService } from '../services/database.service';
 
 export async function syncLogsDb(db: DatabaseService) {
   console.log('janitor: sync database records');
-  const result = await db.query<{
+  const result = await db.all<{
     id: number;
     basename: string;
     path: string;
@@ -24,7 +24,7 @@ export async function syncLogsDb(db: DatabaseService) {
       console.log(
         `janitor: delete database row ${row.id}; file missing: ${row.path}`,
       );
-      db.deleteLog(row.id);
+      await db.deleteLog(row.id);
     }
   }
 }
@@ -32,7 +32,7 @@ export async function syncLogsDb(db: DatabaseService) {
 export async function removeOldLogs(db: DatabaseService) {
   console.log('janitor: start');
   const nameHash: { [key: string]: number } = {};
-  const result = await db.query<{
+  const result = await db.all<{
     id: number;
     basename: string;
     path: string;
@@ -54,7 +54,7 @@ export async function removeOldLogs(db: DatabaseService) {
 
     if (nameHash[row.basename] > JANITOR_COPIES) {
       console.log(`Delete: ${row.path}`);
-      db.deleteLog(row.id);
+      await db.deleteLog(row.id);
       fs.rmSync(row.path);
     }
   }

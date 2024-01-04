@@ -11,18 +11,40 @@ import {
   BROKER_SERVICE,
   BROKER_USER,
   DB_FILE_STATUS,
+  OBJECT_STORAGE_ACCESS_KEY,
   OBJECT_STORAGE_BUCKET,
+  OBJECT_STORAGE_ENABLED,
+  OBJECT_STORAGE_END_POINT,
   OBJECT_STORAGE_SECRET_KEY,
-  VAULT_CRED_KEY,
+  VAULT_CRED_KEYS_ACCESS_KEY,
+  VAULT_CRED_KEYS_BUCKET,
+  VAULT_CRED_KEYS_END_POINT,
+  VAULT_CRED_KEYS_SECRET_KEY,
   VAULT_CRED_PATH,
 } from '../constants';
 import { DatabaseService } from '../services/database.service';
 import VaultService from '../broker/vault.service';
 import BrokerService from '../broker/broker.service';
 
+interface LogStatus {
+  id: number;
+  basename: string;
+  path: string;
+}
+
+interface LogArtifact {
+  id: number;
+  checksum: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
+type FileUpdateCallback = (id: number) => Promise<any>;
+
 export async function backup(db: DatabaseService) {
   console.log('backup: start');
-  const result = await db.query<{
+  const result = await db.all<{
     id: number;
     basename: string;
     path: string;
@@ -41,67 +63,115 @@ export async function backup(db: DatabaseService) {
     return;
   }
 
-  if (OBJECT_STORAGE_SECRET_KEY) {
-    await backupWithSecret(db, OBJECT_STORAGE_SECRET_KEY, result);
-  } else {
-    const brokerService = new BrokerService(BROKER_JWT);
-    try {
-      const openResponse = await brokerService.open({
-        event: {
-          provider: 'nr-objectstore-rotate-backup',
-          reason: 'Cron triggered',
-        },
-        actions: [
-          {
-            action: 'backup',
-            id: 'backup',
-            provision: ['token/self'],
-            service: {
-              name: BROKER_SERVICE,
-              project: BROKER_PROJECT,
-              environment: BROKER_ENVIRONMENT,
-            },
-          },
-        ],
-        user: {
-          name: BROKER_USER,
-        },
-      });
-      const actionToken = openResponse.actions['backup'].token;
-      const vaultAccessToken = await brokerService.provisionToken(actionToken);
-      const vault = new VaultService(vaultAccessToken);
-      const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
-      const secretKey = objectStorageCreds[VAULT_CRED_KEY];
-      vault.revokeToken();
-      const backupFiles = await backupWithSecret(db, secretKey, result);
-      for (const fileObj of backupFiles) {
-        await brokerService.attachArtifact(actionToken, fileObj);
+  const fileUpdateCb: FileUpdateCallback = (id) => {
+    return db.updatelogStatus(id, DB_FILE_STATUS.CopiedToObjectStore);
+  };
+
+  try {
+    if (!OBJECT_STORAGE_ENABLED) {
+      // Skip copy to object storage
+      for (const file of result.rows) {
+        await db.updatelogStatus(file.id, DB_FILE_STATUS.CopiedToObjectStore);
       }
-      brokerService.close(true);
-    } catch (e: any) {
-      // Error!
-      console.log(e);
+    } else if (BROKER_JWT === '') {
+      await backupUsingEnv(result.rows, fileUpdateCb);
+    } else {
+      await backupUsingBroker(BROKER_JWT, result.rows, fileUpdateCb);
     }
+  } catch (e: any) {
+    // Error!
+    console.log(e);
   }
 }
 
+async function backupUsingEnv(
+  dbFileRows: LogStatus[],
+  cb: FileUpdateCallback,
+): Promise<LogArtifact[]> {
+  const backupFiles = await backupWithSecret(
+    dbFileRows,
+    OBJECT_STORAGE_END_POINT,
+    OBJECT_STORAGE_ACCESS_KEY,
+    OBJECT_STORAGE_SECRET_KEY,
+    OBJECT_STORAGE_BUCKET,
+  );
+
+  for (const file of backupFiles) {
+    await cb(file.id);
+  }
+  return backupFiles;
+}
+
+async function backupUsingBroker(
+  brokerJwt: string,
+  dbFileRows: LogStatus[],
+  cb: FileUpdateCallback,
+): Promise<LogArtifact[]> {
+  const brokerService = new BrokerService(brokerJwt);
+  const openResponse = await brokerService.open({
+    event: {
+      provider: 'nr-objectstore-rotate-backup',
+      reason: 'Cron triggered',
+    },
+    actions: [
+      {
+        action: 'backup',
+        id: 'backup',
+        provision: ['token/self'],
+        service: {
+          name: BROKER_SERVICE,
+          project: BROKER_PROJECT,
+          environment: BROKER_ENVIRONMENT,
+        },
+      },
+    ],
+    user: {
+      name: BROKER_USER,
+    },
+  });
+  const actionToken = openResponse.actions['backup'].token;
+  const vaultAccessToken = await brokerService.provisionToken(actionToken);
+  const vault = new VaultService(vaultAccessToken);
+  const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
+  vault.revokeToken();
+  const backupFiles = await backupWithSecret(
+    dbFileRows,
+    VAULT_CRED_KEYS_END_POINT === ''
+      ? OBJECT_STORAGE_END_POINT
+      : objectStorageCreds[VAULT_CRED_KEYS_END_POINT],
+    VAULT_CRED_KEYS_ACCESS_KEY === ''
+      ? OBJECT_STORAGE_ACCESS_KEY
+      : objectStorageCreds[VAULT_CRED_KEYS_ACCESS_KEY],
+    VAULT_CRED_KEYS_BUCKET === ''
+      ? OBJECT_STORAGE_SECRET_KEY
+      : objectStorageCreds[VAULT_CRED_KEYS_BUCKET],
+    VAULT_CRED_KEYS_SECRET_KEY === ''
+      ? OBJECT_STORAGE_BUCKET
+      : objectStorageCreds[VAULT_CRED_KEYS_SECRET_KEY],
+  );
+
+  for (const file of backupFiles) {
+    await brokerService.attachArtifact(actionToken, file);
+    await cb(file.id);
+  }
+  brokerService.close(true);
+
+  return backupFiles;
+}
+
 async function backupWithSecret(
-  db: DatabaseService,
-  secret: string,
-  dbResult: {
-    rows: {
-      id: number;
-      basename: string;
-      path: string;
-    }[];
-  },
-): Promise<any[]> {
-  const client = getClient(secret);
-  const files = [];
-  for (const row of dbResult.rows) {
+  dbFileRows: LogStatus[],
+  endPoint: string,
+  accessKey: string,
+  secretKey: string,
+  bucket: string,
+): Promise<LogArtifact[]> {
+  const client = getClient(endPoint, accessKey, secretKey);
+  const files: LogArtifact[] = [];
+  for (const row of dbFileRows) {
     try {
       const response = await client.fPutObject(
-        OBJECT_STORAGE_BUCKET,
+        bucket,
         path.basename(row.path),
         row.path,
       );
@@ -111,24 +181,15 @@ async function backupWithSecret(
       console.log(info);
       continue;
     }
-    db.query<{
-      id: number;
-      basename: string;
-      path: string;
-    }>(
-      `
-      UPDATE logs
-      SET status = ?
-      WHERE id = ?
-      `,
-      [DB_FILE_STATUS.CopiedToObjectStore, row.id],
-    );
+    const checksum = `sha256:${await computeHash(row.path)}`;
     files.push({
-      checksum: `sha256:${await computeHash(row.path)}`,
+      id: row.id,
+      checksum,
       name: path.basename(row.path),
       size: fs.statSync(row.path).size,
       type: 'tgz',
     });
+    console.log(`backup: Sent ${row.path} [${checksum}]`);
   }
   return files;
 }
