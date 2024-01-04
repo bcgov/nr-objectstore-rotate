@@ -15,6 +15,8 @@ export const JANITOR_COPIES = Number.parseInt(
 );
 
 // Object storage - required
+export const OBJECT_STORAGE_ENABLED =
+  process.env.OBJECT_STORAGE_ENABLED == 'true' ?? true;
 export const OBJECT_STORAGE_END_POINT =
   process.env.OBJECT_STORAGE_END_POINT ?? '';
 export const OBJECT_STORAGE_ACCESS_KEY =
@@ -38,11 +40,20 @@ export const ENV_LONG_TO_SHORT: { [key: string]: string } = {
 export const BROKER_PROJECT = process.env.BROKER_PROJECT ?? '';
 export const BROKER_SERVICE = process.env.BROKER_SERVICE ?? '';
 export const BROKER_ENVIRONMENT = process.env.BROKER_ENVIRONMENT ?? '';
+// Path to the Object storage credentials in Vault
 export const VAULT_CRED_PATH =
   process.env.VAULT_CRED_PATH ??
   `/apps/${ENV_LONG_TO_SHORT[BROKER_ENVIRONMENT]}/${BROKER_PROJECT}/${BROKER_SERVICE}/rotatebackup`;
-
-export const VAULT_CRED_KEY = process.env.VAULT_CRED_KEY ?? 'secret_key';
+// If VAULT_CRED_KEYS_* is set, the value from VAULT_CRED_PATH replaces OBJECT_STORAGE_*
+// Example: VAULT_CRED_KEYS_SECRET_KEY="secret_key" would replace OBJECT_STORAGE_SECRET_KEY
+//          with the value of the key 'secret_key' at the path VAULT_CRED_PATH in Vault.
+export const VAULT_CRED_KEYS_END_POINT =
+  process.env.VAULT_CRED_KEYS_END_POINT ?? '';
+export const VAULT_CRED_KEYS_ACCESS_KEY =
+  process.env.VAULT_CRED_KEYS_ACCESS_KEY ?? '';
+export const VAULT_CRED_KEYS_BUCKET = process.env.VAULT_CRED_KEYS_BUCKET ?? '';
+export const VAULT_CRED_KEYS_SECRET_KEY =
+  process.env.VAULT_CRED_KEYS_SECRET_KEY ?? '';
 export const VAULT_URL =
   process.env.VAULT_URL ?? 'https://knox.io.nrs.gov.bc.ca';
 

@@ -6,7 +6,7 @@ import { DatabaseService } from '../services/database.service';
 
 export async function compress(db: DatabaseService) {
   console.log('compress: start');
-  const result = await db.query<{
+  const result = await db.all<{
     id: number;
     basename: string;
     path: string;
@@ -33,7 +33,9 @@ export async function compress(db: DatabaseService) {
     }
 
     await new Promise<void>((resolve, reject) => {
-      exec(`tar -zcvf ${row.path}.tgz ${row.path}`, (error, stdout, stderr) => {
+      const cmd = `tar -zcvf ${row.path}.tgz ${row.path}`;
+      console.log(`compress: ${cmd}`);
+      exec(cmd, (error, stdout, stderr) => {
         if (error) {
           // node couldn't run the command
           reject(error);
@@ -41,13 +43,13 @@ export async function compress(db: DatabaseService) {
         }
         // Using process.stdout.write to prevent double new lines.
         if (stdout) {
-          process.stdout.write(`stdout: ${stdout}`);
+          process.stdout.write(`compress: [stdout] ${stdout}`);
         }
         if (stderr) {
-          process.stdout.write(`stderr: ${stderr}`);
+          process.stdout.write(`compress: [stderr] ${stderr}`);
         }
 
-        db.query(
+        db.run(
           `
           UPDATE logs
           SET status = ?,

@@ -28,8 +28,7 @@ if (
 }
 
 async function main() {
-  const db = new DatabaseService();
-  await db.init();
+  const db = await DatabaseService.create();
 
   const rotateJob = Cron(CRON_ROTATE, async () => {
     await rotateLogs(db);

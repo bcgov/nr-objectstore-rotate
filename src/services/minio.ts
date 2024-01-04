@@ -1,15 +1,15 @@
 import * as Minio from 'minio';
-import {
-  OBJECT_STORAGE_ACCESS_KEY,
-  OBJECT_STORAGE_END_POINT,
-} from '../constants';
 
 // Default URL if not defined to avoid startup errors in unit tests, batch, etc.
-export function getClient(secretKey: string) {
+export function getClient(
+  endPoint: string,
+  accessKey: string,
+  secretKey: string,
+) {
   return new Minio.Client({
-    endPoint: OBJECT_STORAGE_END_POINT,
+    endPoint,
     useSSL: true,
-    accessKey: OBJECT_STORAGE_ACCESS_KEY,
+    accessKey,
     secretKey,
   });
 }
