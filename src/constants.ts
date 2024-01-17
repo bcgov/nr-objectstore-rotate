@@ -63,7 +63,7 @@ export const VAULT_CRED_KEYS_BUCKET = process.env.VAULT_CRED_KEYS_BUCKET ?? '';
 export const VAULT_CRED_KEYS_SECRET_KEY =
   process.env.VAULT_CRED_KEYS_SECRET_KEY ?? '';
 export const VAULT_URL =
-  process.env.VAULT_URL ?? 'https://knox.io.nrs.gov.bc.ca';
+  process.env.VAULT_URL ?? 'https://knox.io.nrs.gov.bc.ca/';
 
 export enum DB_FILE_STATUS {
   Moved,
