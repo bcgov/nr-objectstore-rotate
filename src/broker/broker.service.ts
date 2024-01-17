@@ -90,8 +90,7 @@ export class BrokerService {
       if (!unwrapToken) {
         return wrappedTokenResponse.wrap_info.token;
       }
-      const vault = new VaultService(wrappedTokenResponse.wrap_info.token);
-      const unwrappedToken = await vault.unwrapToken(
+      const unwrappedToken = await VaultService.unwrapToken(
         wrappedTokenResponse.wrap_info.token,
       );
 
