@@ -21,7 +21,7 @@ export class BrokerService {
     }
 
     const params = ttl ? `?ttl=${ttl}&quickstart=true` : '?quickstart=true';
-    const url = `${BROKER_URL}intention/open${params}`;
+    const url = `${BROKER_URL}v1/intention/open${params}`;
     const message = intention;
     const headers = {
       'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ export class BrokerService {
     }
 
     const outcome = successArg ? 'success' : 'failure';
-    const url = `${BROKER_URL}intention/close?outcome=${outcome}`;
+    const url = `${BROKER_URL}v1/intention/close?outcome=${outcome}`;
     const headers = {
       'Content-Type': 'application/json',
       [HEADER_BROKER_TOKEN]: this.openResponse.token,
@@ -73,7 +73,7 @@ export class BrokerService {
       throw new Error('Invalid action token');
     }
 
-    const url = `${BROKER_URL}provision/token/self`;
+    const url = `${BROKER_URL}v1/provision/token/self`;
     const headers: any = {
       'Content-Type': 'application/json',
       [HEADER_BROKER_TOKEN]: actionToken,
@@ -115,7 +115,7 @@ export class BrokerService {
       throw new Error('Invalid action token');
     }
 
-    const url = `${BROKER_URL}intention/action/artifact`;
+    const url = `${BROKER_URL}v1/intention/action/artifact`;
     const headers: any = {
       'Content-Type': 'application/json',
       [HEADER_BROKER_TOKEN]: actionToken,
