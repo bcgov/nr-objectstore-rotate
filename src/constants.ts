@@ -51,7 +51,7 @@ export const BROKER_ENVIRONMENT = process.env.BROKER_ENVIRONMENT ?? '';
 // Path to the Object storage credentials in Vault
 export const VAULT_CRED_PATH =
   process.env.VAULT_CRED_PATH ??
-  `/apps/data/${
+  `apps/data/${
     ENV_LONG_TO_SHORT[BROKER_ENVIRONMENT]
   }/${BROKER_PROJECT}/${BROKER_SERVICE}${
     process.env.VAULT_CRED_PATH_SUFFIX ? process.env.VAULT_CRED_PATH_SUFFIX : ''
