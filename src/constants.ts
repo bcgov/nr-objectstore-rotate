@@ -26,6 +26,11 @@ export const OBJECT_STORAGE_ACCESS_KEY =
 export const OBJECT_STORAGE_BUCKET = process.env.OBJECT_STORAGE_BUCKET ?? '';
 export const OBJECT_STORAGE_SECRET_KEY =
   process.env.OBJECT_STORAGE_SECRET_KEY ?? '';
+export const OBJECT_STORAGE_FILENAME_PREFIX =
+  process.env.OBJECT_STORAGE_FILENAME_PREFIX ?? '';
+// Optional key/value JSON object with metadata
+export const OBJECT_STORAGE_METADATA =
+  process.env.OBJECT_STORAGE_METADATA ?? '';
 
 // Optional - Fetch OBJECT_STORAGE_SECRET_KEY from Vault using NR Broker
 export const BROKER_URL =
