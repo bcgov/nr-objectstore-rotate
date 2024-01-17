@@ -10,7 +10,7 @@ export class VaultService {
   }
 
   async unwrapToken(token: string): Promise<any | undefined> {
-    const url = `${VAULT_URL}sys/wrapping/unwrap`;
+    const url = `${VAULT_URL}/sys/wrapping/unwrap`;
     const headers = {
       'Content-Type': 'application/json',
       'X-Vault-Token': token,
@@ -23,7 +23,7 @@ export class VaultService {
   }
 
   async read(path: string): Promise<any> {
-    const url = `${VAULT_URL}${path}`;
+    const url = `${VAULT_URL}/${path}`;
     const headers = {
       'Content-Type': 'application/json',
       [this.HEADER_VAULT_TOKEN]: this.token,
@@ -43,7 +43,7 @@ export class VaultService {
   }
 
   async revokeToken(): Promise<number> {
-    const url = `${VAULT_URL}auth/token/revoke-self`;
+    const url = `${VAULT_URL}/auth/token/revoke-self`;
     const headers = {
       'Content-Type': 'application/json',
       [this.HEADER_VAULT_TOKEN]: this.token,
