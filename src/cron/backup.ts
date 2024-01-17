@@ -181,7 +181,7 @@ async function backupWithSecret(
         bucket,
         `${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(row.path)}`,
         row.path,
-        objectstorageMetadata,
+        objectstorageMetadata ?? {},
       );
       console.log(response);
     } catch (err) {
