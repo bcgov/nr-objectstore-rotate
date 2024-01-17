@@ -15,6 +15,8 @@ import {
   OBJECT_STORAGE_BUCKET,
   OBJECT_STORAGE_ENABLED,
   OBJECT_STORAGE_END_POINT,
+  OBJECT_STORAGE_FILENAME_PREFIX,
+  OBJECT_STORAGE_METADATA,
   OBJECT_STORAGE_SECRET_KEY,
   VAULT_CRED_KEYS_ACCESS_KEY,
   VAULT_CRED_KEYS_BUCKET,
@@ -25,6 +27,7 @@ import {
 import { DatabaseService } from '../services/database.service';
 import VaultService from '../broker/vault.service';
 import BrokerService from '../broker/broker.service';
+import { ItemBucketMetadata } from 'minio';
 
 interface LogStatus {
   id: number;
@@ -41,6 +44,10 @@ interface LogArtifact {
 }
 
 type FileUpdateCallback = (id: number) => Promise<any>;
+const objectstorageMetadata: ItemBucketMetadata =
+  OBJECT_STORAGE_METADATA !== ''
+    ? JSON.parse(OBJECT_STORAGE_METADATA)
+    : undefined;
 
 export async function backup(db: DatabaseService) {
   console.log('backup: start');
@@ -172,8 +179,9 @@ async function backupWithSecret(
     try {
       const response = await client.fPutObject(
         bucket,
-        path.basename(row.path),
+        `${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(row.path)}`,
         row.path,
+        objectstorageMetadata ?? {},
       );
       console.log(response);
     } catch (err) {

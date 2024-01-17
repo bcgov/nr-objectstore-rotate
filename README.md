@@ -1,8 +1,36 @@
-# NR Object Store Rotate
+# NR Object Storage Rotate
 
-Sidecar for rotating log files to objectstore.
+A Sidecar container for rotating, compressing and backing up log files to Object Storage.
 
-## Testing
+## Architecture
+
+The container is a Typescipt Node.js application that uses a SQLite database to track the files as they are stepped through each stage. The stages run independantely on a configurable cron schedule.
+
+COnfigurable environment variables will be shown like `ENV_VAR` below.
+
+### Stage 0 - Log file generated
+
+The application logs to disk. Files to be rotated must end with `LOGROTATE_SUFFIX`.
+
+### Stage 1 - Rotate log file
+
+The environment variable `CRON_ROTATE` is used to schedule the rotation of the files. Matching files are rotated by renaming the files to append a timestamp.
+
+If any files are rotated then, optionally, `LOGROTATE_POSTROTATE_COMMAND` is called. It can be necessary to signal the application that the rotation occurred so it can open a new file.
+
+### Stage 2 - Compress log file
+
+The environment variable `CRON_COMPRESS` is used to schedule the compression of the rotated files.
+
+### Stage 3 - Backup log file
+
+The environment variable `CRON_BACKUP` is used to schedule the back of the compressed files to Object Storage. To identify the source, a prefix can be configured by setting `OBJECT_STORAGE_FILENAME_PREFIX`. Any arbitrary metadata can be set by setting `OBJECT_STORAGE_METADATA` to be a key/value JSON string.
+
+### Stage 4 - Janitor
+
+The environment variable `CRON_JANITOR` is used to schedule the janitor which removes files after they have been backed up. The number of log files to retain can be configured by setting `JANITOR_COPIES`.
+
+## Local Testing
 
 1. Copy `setenv-tmpl.sh` to `setenv-local.sh`.
 2. Modify cron to run every minute ("*/1 * * * *").

@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import { exec } from 'child_process';
 
 import { DB_FILE_STATUS } from '../constants';
@@ -33,7 +34,9 @@ export async function compress(db: DatabaseService) {
     }
 
     await new Promise<void>((resolve, reject) => {
-      const cmd = `tar -zcvf ${row.path}.tgz ${row.path}`;
+      const cmd = `tar -zcvf ${row.path}.tgz -C ${path.dirname(
+        row.path,
+      )} ${path.basename(row.path)}`;
       console.log(`compress: ${cmd}`);
       exec(cmd, (error, stdout, stderr) => {
         if (error) {
