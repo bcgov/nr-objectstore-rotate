@@ -141,32 +141,36 @@ async function backupUsingBroker(
     'backup',
     BROKER_ROLE_ID,
   );
-  const vault = new VaultService(vaultAccessToken);
-  const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
-  vault.revokeToken();
-  const backupFiles = await backupWithSecret(
-    dbFileRows,
-    VAULT_CRED_KEYS_END_POINT === ''
-      ? OBJECT_STORAGE_END_POINT
-      : objectStorageCreds[VAULT_CRED_KEYS_END_POINT],
-    VAULT_CRED_KEYS_ACCESS_KEY === ''
-      ? OBJECT_STORAGE_ACCESS_KEY
-      : objectStorageCreds[VAULT_CRED_KEYS_ACCESS_KEY],
-    VAULT_CRED_KEYS_BUCKET === ''
-      ? OBJECT_STORAGE_SECRET_KEY
-      : objectStorageCreds[VAULT_CRED_KEYS_BUCKET],
-    VAULT_CRED_KEYS_SECRET_KEY === ''
-      ? OBJECT_STORAGE_BUCKET
-      : objectStorageCreds[VAULT_CRED_KEYS_SECRET_KEY],
-  );
+  try {
+    const vault = new VaultService(vaultAccessToken);
+    const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
+    vault.revokeToken();
+    const backupFiles = await backupWithSecret(
+      dbFileRows,
+      VAULT_CRED_KEYS_END_POINT === ''
+        ? OBJECT_STORAGE_END_POINT
+        : objectStorageCreds[VAULT_CRED_KEYS_END_POINT],
+      VAULT_CRED_KEYS_ACCESS_KEY === ''
+        ? OBJECT_STORAGE_ACCESS_KEY
+        : objectStorageCreds[VAULT_CRED_KEYS_ACCESS_KEY],
+      VAULT_CRED_KEYS_BUCKET === ''
+        ? OBJECT_STORAGE_SECRET_KEY
+        : objectStorageCreds[VAULT_CRED_KEYS_BUCKET],
+      VAULT_CRED_KEYS_SECRET_KEY === ''
+        ? OBJECT_STORAGE_BUCKET
+        : objectStorageCreds[VAULT_CRED_KEYS_SECRET_KEY],
+    );
 
-  for (const file of backupFiles) {
-    await brokerService.attachArtifact('backup', file);
-    await cb(file.id);
+    for (const file of backupFiles) {
+      await brokerService.attachArtifact('backup', file);
+      await cb(file.id);
+    }
+    brokerService.close(true);
+    return backupFiles;
+  } catch (e: any) {
+    brokerService.close(false);
+    throw e;
   }
-  brokerService.close(true);
-
-  return backupFiles;
 }
 
 async function backupWithSecret(
