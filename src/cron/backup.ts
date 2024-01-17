@@ -153,12 +153,12 @@ async function backupUsingBroker(
       VAULT_CRED_KEYS_ACCESS_KEY === ''
         ? OBJECT_STORAGE_ACCESS_KEY
         : objectStorageCreds[VAULT_CRED_KEYS_ACCESS_KEY],
-      VAULT_CRED_KEYS_BUCKET === ''
-        ? OBJECT_STORAGE_SECRET_KEY
-        : objectStorageCreds[VAULT_CRED_KEYS_BUCKET],
       VAULT_CRED_KEYS_SECRET_KEY === ''
         ? OBJECT_STORAGE_BUCKET
         : objectStorageCreds[VAULT_CRED_KEYS_SECRET_KEY],
+      VAULT_CRED_KEYS_BUCKET === ''
+        ? OBJECT_STORAGE_SECRET_KEY
+        : objectStorageCreds[VAULT_CRED_KEYS_BUCKET],
     );
 
     for (const file of backupFiles) {
