@@ -51,7 +51,11 @@ export const BROKER_ENVIRONMENT = process.env.BROKER_ENVIRONMENT ?? '';
 // Path to the Object storage credentials in Vault
 export const VAULT_CRED_PATH =
   process.env.VAULT_CRED_PATH ??
-  `/apps/${ENV_LONG_TO_SHORT[BROKER_ENVIRONMENT]}/${BROKER_PROJECT}/${BROKER_SERVICE}/rotatebackup`;
+  `apps/data/${
+    ENV_LONG_TO_SHORT[BROKER_ENVIRONMENT]
+  }/${BROKER_PROJECT}/${BROKER_SERVICE}${
+    process.env.VAULT_CRED_PATH_SUFFIX ? process.env.VAULT_CRED_PATH_SUFFIX : ''
+  }`;
 // If VAULT_CRED_KEYS_* is set, the value from VAULT_CRED_PATH replaces OBJECT_STORAGE_*
 // Example: VAULT_CRED_KEYS_SECRET_KEY="secret_key" would replace OBJECT_STORAGE_SECRET_KEY
 //          with the value of the key 'secret_key' at the path VAULT_CRED_PATH in Vault.
