@@ -38,6 +38,7 @@ export const BROKER_URL =
 export const BROKER_JWT = process.env.BROKER_JWT ?? '';
 export const BROKER_USER =
   process.env.BROKER_USER ?? 'objectstore-backup@internal';
+export const BROKER_ROLE_ID = process.env.BROKER_ROLE_ID ?? null;
 
 export const ENV_LONG_TO_SHORT: { [key: string]: string } = {
   development: 'dev',

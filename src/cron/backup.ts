@@ -8,6 +8,7 @@ import {
   BROKER_ENVIRONMENT,
   BROKER_JWT,
   BROKER_PROJECT,
+  BROKER_ROLE_ID,
   BROKER_SERVICE,
   BROKER_USER,
   DB_FILE_STATUS,
@@ -115,7 +116,7 @@ async function backupUsingBroker(
   cb: FileUpdateCallback,
 ): Promise<LogArtifact[]> {
   const brokerService = new BrokerService(brokerJwt);
-  const openResponse = await brokerService.open({
+  await brokerService.open({
     event: {
       provider: 'nr-objectstore-rotate-backup',
       reason: 'Cron triggered',
@@ -136,8 +137,10 @@ async function backupUsingBroker(
       name: BROKER_USER,
     },
   });
-  const actionToken = openResponse.actions['backup'].token;
-  const vaultAccessToken = await brokerService.provisionToken(actionToken);
+  const vaultAccessToken = await brokerService.provisionToken(
+    'backup',
+    BROKER_ROLE_ID,
+  );
   const vault = new VaultService(vaultAccessToken);
   const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
   vault.revokeToken();
@@ -158,7 +161,7 @@ async function backupUsingBroker(
   );
 
   for (const file of backupFiles) {
-    await brokerService.attachArtifact(actionToken, file);
+    await brokerService.attachArtifact('backup', file);
     await cb(file.id);
   }
   brokerService.close(true);
