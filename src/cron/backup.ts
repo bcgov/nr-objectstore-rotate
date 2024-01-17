@@ -8,6 +8,7 @@ import {
   BROKER_ENVIRONMENT,
   BROKER_JWT,
   BROKER_PROJECT,
+  BROKER_ROLE_ID,
   BROKER_SERVICE,
   BROKER_USER,
   DB_FILE_STATUS,
@@ -115,7 +116,7 @@ async function backupUsingBroker(
   cb: FileUpdateCallback,
 ): Promise<LogArtifact[]> {
   const brokerService = new BrokerService(brokerJwt);
-  const openResponse = await brokerService.open({
+  await brokerService.open({
     event: {
       provider: 'nr-objectstore-rotate-backup',
       reason: 'Cron triggered',
@@ -136,34 +137,40 @@ async function backupUsingBroker(
       name: BROKER_USER,
     },
   });
-  const actionToken = openResponse.actions['backup'].token;
-  const vaultAccessToken = await brokerService.provisionToken(actionToken);
-  const vault = new VaultService(vaultAccessToken);
-  const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
-  vault.revokeToken();
-  const backupFiles = await backupWithSecret(
-    dbFileRows,
-    VAULT_CRED_KEYS_END_POINT === ''
-      ? OBJECT_STORAGE_END_POINT
-      : objectStorageCreds[VAULT_CRED_KEYS_END_POINT],
-    VAULT_CRED_KEYS_ACCESS_KEY === ''
-      ? OBJECT_STORAGE_ACCESS_KEY
-      : objectStorageCreds[VAULT_CRED_KEYS_ACCESS_KEY],
-    VAULT_CRED_KEYS_BUCKET === ''
-      ? OBJECT_STORAGE_SECRET_KEY
-      : objectStorageCreds[VAULT_CRED_KEYS_BUCKET],
-    VAULT_CRED_KEYS_SECRET_KEY === ''
-      ? OBJECT_STORAGE_BUCKET
-      : objectStorageCreds[VAULT_CRED_KEYS_SECRET_KEY],
+  const vaultAccessToken = await brokerService.provisionToken(
+    'backup',
+    BROKER_ROLE_ID,
   );
+  try {
+    const vault = new VaultService(vaultAccessToken);
+    const objectStorageCreds = await vault.read(VAULT_CRED_PATH);
+    vault.revokeToken();
+    const backupFiles = await backupWithSecret(
+      dbFileRows,
+      VAULT_CRED_KEYS_END_POINT === ''
+        ? OBJECT_STORAGE_END_POINT
+        : objectStorageCreds[VAULT_CRED_KEYS_END_POINT],
+      VAULT_CRED_KEYS_ACCESS_KEY === ''
+        ? OBJECT_STORAGE_ACCESS_KEY
+        : objectStorageCreds[VAULT_CRED_KEYS_ACCESS_KEY],
+      VAULT_CRED_KEYS_BUCKET === ''
+        ? OBJECT_STORAGE_SECRET_KEY
+        : objectStorageCreds[VAULT_CRED_KEYS_BUCKET],
+      VAULT_CRED_KEYS_SECRET_KEY === ''
+        ? OBJECT_STORAGE_BUCKET
+        : objectStorageCreds[VAULT_CRED_KEYS_SECRET_KEY],
+    );
 
-  for (const file of backupFiles) {
-    await brokerService.attachArtifact(actionToken, file);
-    await cb(file.id);
+    for (const file of backupFiles) {
+      await brokerService.attachArtifact('backup', file);
+      await cb(file.id);
+    }
+    brokerService.close(true);
+    return backupFiles;
+  } catch (e: any) {
+    brokerService.close(false);
+    throw e;
   }
-  brokerService.close(true);
-
-  return backupFiles;
 }
 
 async function backupWithSecret(
