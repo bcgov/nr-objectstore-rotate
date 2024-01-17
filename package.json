@@ -1,6 +1,6 @@
 {
   "name": "nr-objectstore-rotate",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Sidecar for rotating log files to objectstore",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "@types/node": "^20.11.4",
+    "@types/node": "^20.11.5",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
     "eslint": "^8.56.0",
