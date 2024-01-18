@@ -4,9 +4,6 @@ import {
   CRON_COMPRESS,
   CRON_JANITOR,
   CRON_ROTATE,
-  OBJECT_STORAGE_ACCESS_KEY,
-  OBJECT_STORAGE_BUCKET,
-  OBJECT_STORAGE_END_POINT,
 } from './constants';
 import { backup } from './cron/backup';
 import { DatabaseService } from './services/database.service';
@@ -15,17 +12,6 @@ import { removeOldLogs, syncLogsDb } from './cron/janitor';
 import { compress } from './cron/compress';
 
 console.log('Starting...');
-
-if (
-  !OBJECT_STORAGE_ACCESS_KEY ||
-  !OBJECT_STORAGE_END_POINT ||
-  !OBJECT_STORAGE_BUCKET
-) {
-  console.error('Object storage url or access key not provided.');
-  throw new Error(
-    'OBJECT_STORAGE_END_POINT or OBJECT_STORAGE_ACCESS_ID not set',
-  );
-}
 
 async function main() {
   const db = await DatabaseService.create();

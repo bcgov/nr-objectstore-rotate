@@ -1,6 +1,6 @@
 {
   "name": "nr-objectstore-rotate",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Sidecar for rotating log files to objectstore",
   "main": "index.js",
   "scripts": {
