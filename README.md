@@ -30,6 +30,18 @@ The environment variable `CRON_BACKUP` is used to schedule the back of the compr
 
 The environment variable `CRON_JANITOR` is used to schedule the janitor which removes files after they have been backed up. The number of log files to retain can be configured by setting `JANITOR_COPIES`.
 
+## Rotation Setups
+
+The default rotates files once every day. If you change the cron to run hourly, then it will rotate hourly. The minimum file size environment variable can be set to skip rotating files until they grow larger enough. The age maximum can ensure files don't remain on the server indefinitely.
+
+#### LOGROTATE_FILESIZE_MIN
+
+The minimum file size (in bytes) before the file is rotated. Empty files are always skipped. If you set the minimum and run cron frequently, you will prevent files from growing much larger than this size. Default: 0
+
+#### LOGROTATE_AGE_MAX
+
+The maximum age (in milliseconds) of a file before it is rotated (even if the minimum file size is not met). Values less than 1 are ignored. Default: 0
+
 ## Local Testing
 
 1. Copy `setenv-tmpl.sh` to `setenv-local.sh`.

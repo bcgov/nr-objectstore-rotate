@@ -7,13 +7,28 @@ import {
   LOGROTATE_POSTROTATE_COMMAND,
   LOGROTATE_DIRECTORY,
   LOGROTATE_SUFFIX,
+  LOGROTATE_FILESIZE_MIN,
+  LOGROTATE_AGE_MAX,
 } from '../constants';
 import { DatabaseService } from '../services/database.service';
 
 export async function rotateLogs(db: DatabaseService) {
-  const files = fs.readdirSync(LOGROTATE_DIRECTORY);
-  const logFiles = files.filter((file) => file.endsWith(LOGROTATE_SUFFIX));
   console.log('rotate: start');
+  const files = fs.readdirSync(LOGROTATE_DIRECTORY);
+  const now = new Date().getTime();
+  let logFiles = files.filter((file) => file.endsWith(LOGROTATE_SUFFIX));
+  logFiles = files.filter((file) => {
+    const stats = fs.statSync(file);
+    const endTime = stats.ctime.getTime() + LOGROTATE_AGE_MAX;
+    const rotateFile =
+      stats.size > 0 &&
+      ((LOGROTATE_AGE_MAX > 0 && now > endTime) ||
+        stats.size > LOGROTATE_FILESIZE_MIN);
+    if (!rotateFile) {
+      console.log(`rotate: ${file} (skip)`);
+    }
+    return rotateFile;
+  });
   if (logFiles.length > 0) {
     for (const file of logFiles) {
       await rotateLog(db, file);
