@@ -17,8 +17,8 @@ export async function rotateLogs(db: DatabaseService) {
   const files = fs.readdirSync(LOGROTATE_DIRECTORY);
   const now = new Date().getTime();
   let logFiles = files.filter((file) => file.endsWith(LOGROTATE_SUFFIX));
-  logFiles = files.filter((file) => {
-    const stats = fs.statSync(file);
+  logFiles = logFiles.filter((file) => {
+    const stats = fs.statSync(path.join(LOGROTATE_DIRECTORY, file));
     const endTime = stats.ctime.getTime() + LOGROTATE_AGE_MAX;
     const rotateFile =
       stats.size > 0 &&
