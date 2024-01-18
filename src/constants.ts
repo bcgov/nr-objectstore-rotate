@@ -7,6 +7,13 @@ export const LOGROTATE_DIRECTORY = process.env.LOGROTATE_DIRECTORY ?? 'logs';
 export const LOGROTATE_STATUSFILE =
   process.env.LOGROTATE_STATUSFILE ?? 'cron.db';
 
+export const LOGROTATE_FILESIZE_MIN = process.env.LOGROTATE_FILESIZE_MIN
+  ? Number.parseInt(process.env.LOGROTATE_FILESIZE_MIN)
+  : 1;
+export const LOGROTATE_AGE_MAX = process.env.LOGROTATE_AGE_MAX
+  ? Number.parseInt(process.env.LOGROTATE_AGE_MAX)
+  : 0;
+
 export const LOGROTATE_SUFFIX = process.env.LOGROTATE_SUFFIX ?? 'log';
 export const LOGROTATE_POSTROTATE_COMMAND =
   process.env.LOGROTATE_POSTROTATE_COMMAND ?? '';
@@ -26,8 +33,10 @@ export const OBJECT_STORAGE_ACCESS_KEY =
 export const OBJECT_STORAGE_BUCKET = process.env.OBJECT_STORAGE_BUCKET ?? '';
 export const OBJECT_STORAGE_SECRET_KEY =
   process.env.OBJECT_STORAGE_SECRET_KEY ?? '';
-export const OBJECT_STORAGE_FILENAME_PREFIX =
-  process.env.OBJECT_STORAGE_FILENAME_PREFIX ?? '';
+export const OBJECT_STORAGE_FILENAME_PREFIX = process.env
+  .OBJECT_STORAGE_FILENAME_PREFIX
+  ? `${process.env.OBJECT_STORAGE_FILENAME_PREFIX}.`
+  : '';
 // Optional key/value JSON object with metadata
 export const OBJECT_STORAGE_METADATA =
   process.env.OBJECT_STORAGE_METADATA ?? '';

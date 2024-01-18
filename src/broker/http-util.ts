@@ -8,7 +8,7 @@ export function sendHttpsRequest(
   url: string,
   method: string,
   headers: any,
-  body?: string,
+  body?: any,
 ): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     const options: https.RequestOptions = {

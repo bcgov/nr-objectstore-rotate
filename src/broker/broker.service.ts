@@ -22,13 +22,12 @@ export class BrokerService {
 
     const params = ttl ? `?ttl=${ttl}&quickstart=true` : '?quickstart=true';
     const url = `${BROKER_URL}v1/intention/open${params}`;
-    const message = intention;
     const headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.brokerJwt}`,
     };
 
-    const response = await sendHttpsRequest(url, 'POST', headers, message);
+    const response = await sendHttpsRequest(url, 'POST', headers, intention);
 
     if (isResponseSuccess(response.statusCode)) {
       this.openResponse = JSON.parse(response.body);
@@ -120,7 +119,7 @@ export class BrokerService {
       [HEADER_BROKER_TOKEN]: actionToken,
     };
 
-    return await sendHttpsRequest(url, 'POST', headers, JSON.stringify(file));
+    return await sendHttpsRequest(url, 'POST', headers, file);
   }
 }
 
