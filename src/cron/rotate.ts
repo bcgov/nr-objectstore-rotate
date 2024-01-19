@@ -70,16 +70,16 @@ async function rotateLog(db: DatabaseService, file: string) {
   await db.addLog(file, newPath);
 }
 
-// Append date to logname
+// Append last change time and current timestamp to logname
 export function newLogName(file: string) {
-  const date = createdDate(path.join(LOGROTATE_DIRECTORY, file));
+  const date = changeDate(path.join(LOGROTATE_DIRECTORY, file));
   return `${file}.${date.getUTCFullYear()}${String(date.getUTCMonth()).padStart(
     2,
     '0',
   )}${String(date.getUTCDate()).padStart(2, '0')}.${new Date().valueOf()}`;
 }
 
-function createdDate(filePath: string) {
-  const { birthtime } = fs.statSync(filePath);
-  return birthtime;
+function changeDate(filePath: string) {
+  const { ctime } = fs.statSync(filePath);
+  return ctime;
 }

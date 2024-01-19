@@ -1,6 +1,6 @@
 export const CRON_ROTATE = process.env.CRON_ROTATE ?? '59 23 * * *';
 export const CRON_COMPRESS = process.env.CRON_COMPRESS ?? '*/10 * * * *';
-export const CRON_BACKUP = process.env.CRON_BACKUP ?? '*/10 * * * *';
+export const CRON_BACKUP = process.env.CRON_BACKUP ?? '*/20 * * * *';
 export const CRON_JANITOR = process.env.CRON_JANITOR ?? '*/10 * * * *';
 
 export const LOGROTATE_DIRECTORY = process.env.LOGROTATE_DIRECTORY ?? 'logs';
@@ -30,9 +30,9 @@ export const OBJECT_STORAGE_END_POINT =
   process.env.OBJECT_STORAGE_END_POINT ?? '';
 export const OBJECT_STORAGE_ACCESS_KEY =
   process.env.OBJECT_STORAGE_ACCESS_KEY ?? '';
-export const OBJECT_STORAGE_BUCKET = process.env.OBJECT_STORAGE_BUCKET ?? '';
 export const OBJECT_STORAGE_SECRET_KEY =
   process.env.OBJECT_STORAGE_SECRET_KEY ?? '';
+export const OBJECT_STORAGE_BUCKET = process.env.OBJECT_STORAGE_BUCKET ?? '';
 export const OBJECT_STORAGE_FILENAME_PREFIX = process.env
   .OBJECT_STORAGE_FILENAME_PREFIX
   ? `${process.env.OBJECT_STORAGE_FILENAME_PREFIX}.`
@@ -63,7 +63,9 @@ export const VAULT_CRED_PATH =
   `apps/data/${
     ENV_LONG_TO_SHORT[BROKER_ENVIRONMENT]
   }/${BROKER_PROJECT}/${BROKER_SERVICE}${
-    process.env.VAULT_CRED_PATH_SUFFIX ? process.env.VAULT_CRED_PATH_SUFFIX : ''
+    process.env.VAULT_CRED_PATH_SUFFIX
+      ? `/${process.env.VAULT_CRED_PATH_SUFFIX}`
+      : ''
   }`;
 // If VAULT_CRED_KEYS_* is set, the value from VAULT_CRED_PATH replaces OBJECT_STORAGE_*
 // Example: VAULT_CRED_KEYS_SECRET_KEY="secret_key" would replace OBJECT_STORAGE_SECRET_KEY
@@ -72,9 +74,9 @@ export const VAULT_CRED_KEYS_END_POINT =
   process.env.VAULT_CRED_KEYS_END_POINT ?? '';
 export const VAULT_CRED_KEYS_ACCESS_KEY =
   process.env.VAULT_CRED_KEYS_ACCESS_KEY ?? '';
-export const VAULT_CRED_KEYS_BUCKET = process.env.VAULT_CRED_KEYS_BUCKET ?? '';
 export const VAULT_CRED_KEYS_SECRET_KEY =
   process.env.VAULT_CRED_KEYS_SECRET_KEY ?? '';
+export const VAULT_CRED_KEYS_BUCKET = process.env.VAULT_CRED_KEYS_BUCKET ?? '';
 export const VAULT_URL =
   process.env.VAULT_URL ?? 'https://knox.io.nrs.gov.bc.ca/';
 
