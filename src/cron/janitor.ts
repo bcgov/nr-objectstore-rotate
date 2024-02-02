@@ -19,7 +19,8 @@ export async function syncLogsDb(db: DatabaseService) {
   );
   for (const row of result.rows) {
     try {
-      fs.openSync(`${row.path}`, 'r');
+      const filehandle = fs.openSync(`${row.path}`, 'r');
+      fs.closeSync(filehandle);
     } catch (err) {
       console.log(
         `janitor: delete database row ${row.id}; file missing: ${row.path}`,

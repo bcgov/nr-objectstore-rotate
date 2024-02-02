@@ -34,25 +34,27 @@ export async function rotateLogs(db: DatabaseService) {
       await rotateLog(db, file);
     }
     if (LOGROTATE_POSTROTATE_COMMAND) {
-      console.log('rotate: run post-rotate');
+      console.log('rotate: post-rotate command [start]');
       await new Promise<void>((resolve, reject) => {
         exec(LOGROTATE_POSTROTATE_COMMAND, (error, stdout, stderr) => {
           if (error) {
             // node couldn't run the command
+            console.log('rotate: command error');
             reject(error);
             return;
           }
           // Using process.stdout.write to prevent double new lines.
           if (stdout) {
-            process.stdout.write(`stdout: ${stdout}`);
+            process.stdout.write(`rotate: [stdout] ${stdout}`);
           }
           if (stderr) {
-            process.stdout.write(`stderr: ${stderr}`);
+            process.stdout.write(`rotate: [stderr] ${stderr}`);
           }
           resolve();
         });
       });
     }
+    console.log('rotate: post-rotate command [end]');
   } else {
     console.log('rotate: no files to rotate');
   }
