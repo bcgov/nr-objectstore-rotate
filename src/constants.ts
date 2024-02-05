@@ -15,6 +15,8 @@ export const LOGROTATE_AGE_MAX = process.env.LOGROTATE_AGE_MAX
   : 0;
 
 export const LOGROTATE_SUFFIX = process.env.LOGROTATE_SUFFIX ?? 'log';
+export const LOGROTATE_COPYTRUNCATE_SUFFIXES =
+  process.env.LOGROTATE_COPYTRUNCATE_SUFFIXES?.split(',') ?? [];
 export const LOGROTATE_POSTROTATE_COMMAND =
   process.env.LOGROTATE_POSTROTATE_COMMAND ?? '';
 export const JANITOR_COPIES = Number.parseInt(

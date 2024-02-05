@@ -7,6 +7,7 @@ import {
   LOGROTATE_POSTROTATE_COMMAND,
   LOGROTATE_DIRECTORY,
   LOGROTATE_SUFFIX,
+  LOGROTATE_COPYTRUNCATE_SUFFIXES,
   LOGROTATE_FILESIZE_MIN,
   LOGROTATE_AGE_MAX,
 } from '../constants';
@@ -64,9 +65,16 @@ export async function rotateLogs(db: DatabaseService) {
 async function rotateLog(db: DatabaseService, file: string) {
   const oldPath = path.join(LOGROTATE_DIRECTORY, file);
   const newPath = path.join(LOGROTATE_DIRECTORY, newLogName(file));
+  const strategy = computeRotateStrategy(file);
 
-  console.log(`rotate: ${oldPath} -> ${newPath}`);
-  fs.renameSync(oldPath, newPath);
+  console.log(`rotate: [${strategy}] ${oldPath} -> ${newPath}`);
+
+  if (strategy === 'rename') {
+    fs.renameSync(oldPath, newPath);
+  } else if (strategy === 'copytruncate') {
+    fs.copyFileSync(oldPath, newPath);
+    fs.truncateSync(oldPath);
+  }
 
   // Add log to database
   await db.addLog(file, newPath);
@@ -84,4 +92,13 @@ export function newLogName(file: string) {
 function changeDate(filePath: string) {
   const { ctime } = fs.statSync(filePath);
   return ctime;
+}
+
+function computeRotateStrategy(file: string) {
+  for (const suffix of LOGROTATE_COPYTRUNCATE_SUFFIXES) {
+    if (file.endsWith(suffix)) {
+      return 'copytruncate';
+    }
+  }
+  return 'rename';
 }
