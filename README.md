@@ -18,6 +18,8 @@ The environment variable `CRON_ROTATE` is used to schedule the rotation of the f
 
 If any files are rotated then, optionally, `LOGROTATE_POSTROTATE_COMMAND` is called. It can be necessary to signal the application that the rotation occurred so it can open a new file.
 
+Files are normally just renamed. You can set `LOGROTATE_COPYTRUNCATE_SUFFIXES` to instead copy and then truncate the file. Some files, like redirected output, can't be renamed and then deleted.
+
 Rotated files are appended with the file's change date and the current UTC timestamp. See: https://nodejs.org/api/fs.html#stat-time-values
 
 ### Stage 2 - Compress log file
