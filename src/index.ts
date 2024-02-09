@@ -28,30 +28,58 @@ async function main() {
         'when launching node to enable forced garbage collection.',
     );
   }
+  const runOnce = process.env.RUN_ONCE === 'true';
+  const compressEnabled = process.env.COMPRESS_ENABLED === 'true';
 
-  const rotateJob = Cron(CRON_ROTATE, async () => {
+  const combinedJob = async () => {
+    // Stage 1: Rotate log
     await rotateLogs(db);
-    runGarbageCollection();
-  });
-  const compressJob = Cron(CRON_COMPRESS, async () => {
-    await syncLogsDb(db);
-    await compress(db);
-    runGarbageCollection();
-  });
-  const backupJob = Cron(CRON_BACKUP, async () => {
+
+    // Stage 2: Compress files - optional
+    if (compressEnabled) {
+      await syncLogsDb(db);
+      await compress(db);
+    }
+
+    // Stage 3: Backup
     await syncLogsDb(db);
     await backup(db);
-    runGarbageCollection();
-  });
-  const janitorJob = Cron(CRON_JANITOR, async () => {
+
+    // Stage 4: Janitor
     await syncLogsDb(db);
     await removeOldLogs(db);
     runGarbageCollection();
-  });
-  console.log(`Rotate job next run: ${rotateJob.nextRun()}`);
-  console.log(`Compress job next run: ${compressJob.nextRun()}`);
-  console.log(`Backup job next run: ${backupJob.nextRun()}`);
-  console.log(`Janitor job next run: ${janitorJob.nextRun()}`);
+  };
+
+  if (runOnce) combinedJob();
+  else {
+    const rotateJob = Cron(CRON_ROTATE, async () => {
+      await rotateLogs(db);
+      runGarbageCollection();
+    });
+
+    if (compressEnabled) {
+      const compressJob = Cron(CRON_COMPRESS, async () => {
+        await syncLogsDb(db);
+        await compress(db);
+        runGarbageCollection();
+      });
+      console.log(`Compress job next run: ${compressJob.nextRun()}`);
+    }
+    const backupJob = Cron(CRON_BACKUP, async () => {
+      await syncLogsDb(db);
+      await backup(db);
+      runGarbageCollection();
+    });
+    const janitorJob = Cron(CRON_JANITOR, async () => {
+      await syncLogsDb(db);
+      await removeOldLogs(db);
+      runGarbageCollection();
+    });
+    console.log(`Rotate job next run: ${rotateJob.nextRun()}`);
+    console.log(`Backup job next run: ${backupJob.nextRun()}`);
+    console.log(`Janitor job next run: ${janitorJob.nextRun()}`);
+  }
 }
 
 main();
