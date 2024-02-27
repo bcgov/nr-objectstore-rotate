@@ -31,54 +31,58 @@ async function main() {
   const runOnce = process.env.RUN_ONCE === 'true';
   const compressEnabled = process.env.COMPRESS_ENABLED === 'true';
 
-  const combinedJob = async () => {
-    // Stage 1: Rotate log
+  const rotateJob = async () => {
     await rotateLogs(db);
+    runGarbageCollection();
+  };
 
-    // Stage 2: Compress files - optional
-    if (compressEnabled) {
-      await syncLogsDb(db);
-      await compress(db);
-    }
+  const compressEnabledJob = async () => {
+    await syncLogsDb(db);
+    await compress(db);
+    runGarbageCollection();
+  };
 
-    // Stage 3: Backup
+  const backupJob = async () => {
     await syncLogsDb(db);
     await backup(db);
+    runGarbageCollection();
+  };
 
-    // Stage 4: Janitor
+  const janitorJob = async () => {
     await syncLogsDb(db);
     await removeOldLogs(db);
     runGarbageCollection();
   };
 
+  const combinedJob = async () => {
+    // Stage 1: Rotate log
+    rotateJob();
+
+    // Stage 2: Compress files - optional
+    // Stage 3: Backup - if compress enabled
+    if (compressEnabled) {
+      compressEnabledJob();
+      backupJob();
+    }
+
+    // Stage 4: Janitor
+    janitorJob();
+  };
+
   if (runOnce) combinedJob();
   else {
-    const rotateJob = Cron(CRON_ROTATE, async () => {
-      await rotateLogs(db);
-      runGarbageCollection();
-    });
+    const rotateCronJob = Cron(CRON_ROTATE, rotateJob);
 
     if (compressEnabled) {
-      const compressJob = Cron(CRON_COMPRESS, async () => {
-        await syncLogsDb(db);
-        await compress(db);
-        runGarbageCollection();
-      });
-      console.log(`Compress job next run: ${compressJob.nextRun()}`);
+      const compressCronJob = Cron(CRON_COMPRESS, compressEnabledJob);
+      const backupCronJob = Cron(CRON_BACKUP, backupJob);
+      console.log(`Compress job next run: ${compressCronJob.nextRun()}`);
+      console.log(`Backup job next run: ${backupCronJob.nextRun()}`);
     }
-    const backupJob = Cron(CRON_BACKUP, async () => {
-      await syncLogsDb(db);
-      await backup(db);
-      runGarbageCollection();
-    });
-    const janitorJob = Cron(CRON_JANITOR, async () => {
-      await syncLogsDb(db);
-      await removeOldLogs(db);
-      runGarbageCollection();
-    });
-    console.log(`Rotate job next run: ${rotateJob.nextRun()}`);
-    console.log(`Backup job next run: ${backupJob.nextRun()}`);
-    console.log(`Janitor job next run: ${janitorJob.nextRun()}`);
+
+    const janitorCronJob = Cron(CRON_JANITOR, janitorJob);
+    console.log(`Rotate job next run: ${rotateCronJob.nextRun()}`);
+    console.log(`Janitor job next run: ${janitorCronJob.nextRun()}`);
   }
 }
 
