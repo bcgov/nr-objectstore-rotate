@@ -12,6 +12,7 @@ import {
   BROKER_SERVICE,
   BROKER_USER,
   DB_FILE_STATUS,
+  COMPRESS_ENABLED,
   OBJECT_STORAGE_ACCESS_KEY,
   OBJECT_STORAGE_BUCKET,
   OBJECT_STORAGE_ENABLED,
@@ -51,6 +52,10 @@ const objectstorageMetadata: ItemBucketMetadata =
     : undefined;
 
 export async function backup(db: DatabaseService) {
+  const dbFileStatus =
+    COMPRESS_ENABLED === 'true'
+      ? DB_FILE_STATUS.Compressed
+      : DB_FILE_STATUS.Rotated;
   console.log('backup: start');
   const result = await db.all<{
     id: number;
@@ -63,7 +68,7 @@ export async function backup(db: DatabaseService) {
     WHERE status = ?
     ORDER BY id DESC
     `,
-    [DB_FILE_STATUS.Compressed],
+    [dbFileStatus],
   );
 
   if (result.rows.length === 0) {
