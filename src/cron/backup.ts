@@ -124,7 +124,8 @@ async function backupUsingBroker(
   await brokerService.open({
     event: {
       provider: 'nr-objectstore-rotate-backup',
-      reason: 'Cron triggered',
+      reason: `Cron triggered for ${BROKER_SERVICE}`,
+      transient: true,
     },
     actions: [
       {
@@ -220,6 +221,7 @@ async function computeHash(filepath: string) {
   // Connect the output of the `input` stream to the input of `hash`
   // and let Node.js do the streaming
   await stream.pipeline(input, hash);
+  input.close();
 
   return hash.digest('hex');
 }
