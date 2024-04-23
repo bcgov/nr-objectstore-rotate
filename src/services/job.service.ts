@@ -39,12 +39,20 @@ export class JobService {
   }
 
   public async runCron() {
-    const rotateCronJob = Cron(CRON_ROTATE, this.rotate);
+    const rotateCronJob = Cron(CRON_ROTATE, () => {
+      this.rotate();
+    });
     const compressCronJob = COMPRESS_SKIP
       ? null
-      : Cron(CRON_COMPRESS, this.compress);
-    const backupCronJob = Cron(CRON_BACKUP, this.backup);
-    const janitorCronJob = Cron(CRON_JANITOR, this.janitor);
+      : Cron(CRON_COMPRESS, () => {
+          this.compress();
+        });
+    const backupCronJob = Cron(CRON_BACKUP, () => {
+      this.backup();
+    });
+    const janitorCronJob = Cron(CRON_JANITOR, () => {
+      this.janitor();
+    });
 
     console.log(`Backup job next run: ${backupCronJob.nextRun()}`);
     if (compressCronJob) {
