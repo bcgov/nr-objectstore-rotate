@@ -1,3 +1,4 @@
+import { RUN_ONCE } from './constants';
 import { DatabaseService } from './services/database.service';
 import { JobService } from './services/job.service';
 
@@ -13,10 +14,12 @@ async function main() {
         'when launching node to enable forced garbage collection.',
     );
   }
-  const runOnce = process.env.RUN_ONCE === 'true';
-  const compressEnabled = process.env.COMPRESS_ENABLED === 'true';
 
-  jobService.run(runOnce, compressEnabled);
+  if (RUN_ONCE) {
+    await jobService.runOnce();
+  } else {
+    await jobService.runCron();
+  }
 }
 
 main();

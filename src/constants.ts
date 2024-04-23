@@ -3,9 +3,8 @@ export const CRON_COMPRESS = process.env.CRON_COMPRESS ?? '*/10 * * * *';
 export const CRON_BACKUP = process.env.CRON_BACKUP ?? '*/20 * * * *';
 export const CRON_JANITOR = process.env.CRON_JANITOR ?? '*/10 * * * *';
 
-export const RUN_ONCE = process.env.RUN_ONCE ?? 'false';
-
-export const COMPRESS_ENABLED = process.env.COMPRESS_ENABLED ?? 'true';
+export const RUN_ONCE = process.env.RUN_ONCE === 'true';
+export const COMPRESS_SKIP = process.env.COMPRESS_SKIP === 'true';
 
 export const LOGROTATE_DIRECTORY = process.env.LOGROTATE_DIRECTORY ?? 'logs';
 export const LOGROTATE_STATUSFILE =

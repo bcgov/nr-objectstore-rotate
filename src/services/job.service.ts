@@ -1,5 +1,6 @@
 import { Cron } from 'croner';
 import {
+  COMPRESS_SKIP,
   CRON_BACKUP,
   CRON_COMPRESS,
   CRON_JANITOR,
@@ -24,36 +25,11 @@ export class JobService {
     this.db = db;
   }
 
-  rotate = async () => {
-    await rotateLogs(this.db);
-    runGarbageCollection();
-  };
-
-  compress = async () => {
-    console.log('start compress');
-    await syncLogsDb(this.db);
-    await compress(this.db);
-    runGarbageCollection();
-  };
-
-  backup = async () => {
-    console.log('start backup');
-    await syncLogsDb(this.db);
-    await backup(this.db);
-    runGarbageCollection();
-  };
-
-  janitor = async () => {
-    await syncLogsDb(this.db);
-    await removeOldLogs(this.db);
-    runGarbageCollection();
-  };
-
-  private async runOnceJob(compressEnabled: boolean) {
+  public async runOnce() {
     // Stage 1: Rotate log
     await this.rotate();
     // Stage 2: Compress files - optional
-    if (compressEnabled) {
+    if (!COMPRESS_SKIP) {
       await this.compress();
     }
     // Stage 3: Backup
@@ -62,23 +38,46 @@ export class JobService {
     await this.janitor();
   }
 
-  private async cronJobs(compressEnabled: boolean) {
+  public async runCron() {
     const rotateCronJob = Cron(CRON_ROTATE, this.rotate);
-
-    if (compressEnabled) {
-      const compressCronJob = Cron(CRON_COMPRESS, this.compress);
-      console.log(`Compress job next run: ${compressCronJob.nextRun()}`);
-    }
+    const compressCronJob = COMPRESS_SKIP
+      ? null
+      : Cron(CRON_COMPRESS, this.compress);
     const backupCronJob = Cron(CRON_BACKUP, this.backup);
     const janitorCronJob = Cron(CRON_JANITOR, this.janitor);
 
     console.log(`Backup job next run: ${backupCronJob.nextRun()}`);
+    if (compressCronJob) {
+      console.log(`Compress job next run: ${compressCronJob.nextRun()}`);
+    } else {
+      console.log(`Compress job next run: stage skipped`);
+    }
     console.log(`Rotate job next run: ${rotateCronJob.nextRun()}`);
     console.log(`Janitor job next run: ${janitorCronJob.nextRun()}`);
   }
 
-  async run(runOnce: boolean, compressEnabled: boolean) {
-    if (runOnce) this.runOnceJob(compressEnabled);
-    else this.cronJobs(compressEnabled);
+  private async rotate() {
+    await rotateLogs(this.db);
+    runGarbageCollection();
+  }
+
+  private async compress() {
+    console.log('start compress');
+    await syncLogsDb(this.db);
+    await compress(this.db);
+    runGarbageCollection();
+  }
+
+  private async backup() {
+    console.log('start backup');
+    await syncLogsDb(this.db);
+    await backup(this.db);
+    runGarbageCollection();
+  }
+
+  private async janitor() {
+    await syncLogsDb(this.db);
+    await removeOldLogs(this.db);
+    runGarbageCollection();
   }
 }

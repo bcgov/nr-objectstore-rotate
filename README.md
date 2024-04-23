@@ -26,7 +26,7 @@ Rotated files are appended with the file's change date and the current UTC times
 
 The environment variable `CRON_COMPRESS` is used to schedule the compression of the rotated files. The each file is compressed into a 'tgz' archive.
 
-This stage can run frequently with little cost.
+This stage can run frequently with little cost. If you wish to skip this stage, set the environment variable `COMPRESS_SKIP` to be true.
 
 ### Stage 3 - Backup log file
 
