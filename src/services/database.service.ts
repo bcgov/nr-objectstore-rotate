@@ -95,7 +95,6 @@ export class DatabaseService {
     return this.run('DELETE FROM logs WHERE id = ?', [id]);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   run(sql: string, params: any = []) {
     return new Promise<void>((resolve, reject) => {
       this.db.run(sql, params, (error) => {
@@ -105,7 +104,6 @@ export class DatabaseService {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   all<T>(sql: string, params: any = []) {
     return new Promise<{ rows: T[] }>((resolve, reject) => {
       this.db.all<T>(sql, params, (error, rows) => {
