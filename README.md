@@ -107,9 +107,9 @@ For each value you want to use from Vault, you must configure a mapping. The `VA
 
 You are free to set as many (or as few) of the `VAULT_CRED_KEYS_*`.
 
-## Local Testing
+## Local Testing with Node
 
-1. Copy `setenv-tmpl.sh` to `setenv-local.sh`.
+1. Copy `setenv-tmpl.sh` to `setenv-local.sh`. (`cp setenv-tmpl.sh setenv-local.sh`)
 2. Modify cron to run every minute ("*/1 * * * *").
 3. Change LOGROTATE_DIRECTORY to "logs". Add your OBJECT_STORAGE_ secrets.
 4. Source env: `source ./setenv-local.sh`
@@ -118,6 +118,12 @@ You are free to set as many (or as few) of the `VAULT_CRED_KEYS_*`.
 7. View DB as cron executes: `sqlite3 ./logs/cron.db 'select * from logs'`
 8. Use https://min.io/docs/minio/linux/reference/minio-mc.html# to view files
 9. Stop and delete test files in objectstore
+
+## Local Testing with Podman
+
+1. Copy `setenv-tmpl.sh` to `setenv-local.sh`. (`cp setenv-tmpl.sh setenv-local.sh`)
+1. podman build -t nr-objectstore-rotate .
+2. podman run --rm -it -v ${PWD}/logs:/logs --env-file setenv-local.sh --userns keep-id nr-objectstore-rotate
 
 # License
 
