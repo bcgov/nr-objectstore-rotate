@@ -48,7 +48,7 @@ export const OBJECT_STORAGE_METADATA =
 
 // Optional - Fetch OBJECT_STORAGE_SECRET_KEY from Vault using NR Broker
 export const BROKER_URL =
-  process.env.BROKER_URL ?? 'https://nr-broker.apps.silver.devops.gov.bc.ca/';
+  process.env.BROKER_URL ?? 'https://broker.io.nrs.gov.bc.ca/';
 export const BROKER_JWT = process.env.BROKER_JWT ?? '';
 export const BROKER_USER =
   process.env.BROKER_USER ?? 'objectstore-backup@internal';
