@@ -2,6 +2,7 @@
 # export CRON_COMPRESS="*/10 * * * *"
 # export CRON_BACKUP="*/20 * * * *"
 # export CRON_JANITOR="*/10 * * * *"
+# export RUN_ONCE="true"
 
 export LOGROTATE_DIRECTORY="/logs"
 # export LOGROTATE_STATUSFILE="cron.db"

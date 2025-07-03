@@ -98,7 +98,7 @@ The required environment variables to set are:
 
 This will set it up to read secrets from the standard key/value credential location in NR Vault for the service. The `VAULT_CRED_PATH_SUFFIX` variable can be set to include a path from the service's root.
 
-The key/value document read from NR Vault will do nothing by default. The `VAULT_CRED_KEYS_*` variables replace the equivalent `OBJECT_STORAGE_*` with the value of the key read from Vault.
+For each value you want to use from Vault, you must configure a mapping. The `VAULT_CRED_KEYS_*` variables replace the equivalent `OBJECT_STORAGE_*` with the value of the key read from Vault.
 
 * VaultDoc[`VAULT_CRED_KEYS_END_POINT`] -> `OBJECT_STORAGE_END_POINT`
 * VaultDoc[`VAULT_CRED_KEYS_ACCESS_KEY`] -> `OBJECT_STORAGE_ACCESS_KEY`
@@ -107,17 +107,23 @@ The key/value document read from NR Vault will do nothing by default. The `VAULT
 
 You are free to set as many (or as few) of the `VAULT_CRED_KEYS_*`.
 
-## Local Testing
+## Local Testing with Node
 
-1. Copy `setenv-tmpl.sh` to `setenv-local.sh`.
+1. Copy `setenv-tmpl.sh` to `setenv-local.sh`. (`cp setenv-tmpl.sh setenv-local.sh`)
 2. Modify cron to run every minute ("*/1 * * * *").
 3. Change LOGROTATE_DIRECTORY to "logs". Add your OBJECT_STORAGE_ secrets.
 4. Source env: `source ./setenv-local.sh`
 5. Start sidecar: `npm run start`
-6. Create sample log files: `./test/create-log-files.sh`
+6. Create sample log files: `./test/create-log-files.sh` (Important: run at the root of the repository)
 7. View DB as cron executes: `sqlite3 ./logs/cron.db 'select * from logs'`
 8. Use https://min.io/docs/minio/linux/reference/minio-mc.html# to view files
 9. Stop and delete test files in objectstore
+
+## Local Testing with Podman
+
+1. Copy `setenv-tmpl.sh` to `setenv-local.sh`. (`cp setenv-tmpl.sh setenv-local.sh`)
+1. podman build -t nr-objectstore-rotate .
+2. podman run --rm -it -v ${PWD}/logs:/logs --env-file setenv-local.sh --userns keep-id nr-objectstore-rotate
 
 # License
 

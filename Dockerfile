@@ -1,5 +1,5 @@
 ARG REPO_LOCATION=
-FROM ${REPO_LOCATION}node:20-alpine as builder
+FROM ${REPO_LOCATION}node:22-alpine AS builder
 
 ### --------------------------------- Build
 # Install packages and build
@@ -10,7 +10,7 @@ RUN npm ci --no-audit && \
     npm ci --omit=dev --no-audit
 
 # Deployment container
-FROM ${REPO_LOCATION}node:20-alpine
+FROM ${REPO_LOCATION}node:22-alpine
 
 # LABEL org.opencontainers.image.description="NR Broker handles the business logic of authenticating and validating requests for automated processes to access secrets"
 # LABEL org.opencontainers.image.licenses=Apache-2.0

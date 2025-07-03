@@ -70,7 +70,7 @@ export async function backup(db: DatabaseService) {
     [dbFileStatus],
   );
 
-  if (result.rows.length === 0) {
+  if (result.length === 0) {
     console.log('backup: no files to backup');
     return;
   }
@@ -82,13 +82,13 @@ export async function backup(db: DatabaseService) {
   try {
     if (!OBJECT_STORAGE_ENABLED) {
       // Skip copy to object storage
-      for (const file of result.rows) {
+      for (const file of result) {
         await db.updatelogStatus(file.id, DB_FILE_STATUS.CopiedToObjectStore);
       }
     } else if (BROKER_JWT === '') {
-      await backupUsingEnv(result.rows, fileUpdateCb);
+      await backupUsingEnv(result, fileUpdateCb);
     } else {
-      await backupUsingBroker(BROKER_JWT, result.rows, fileUpdateCb);
+      await backupUsingBroker(BROKER_JWT, result, fileUpdateCb);
     }
   } catch (e: any) {
     // Error!
