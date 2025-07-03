@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 
 import { DB_FILE_STATUS, JANITOR_COPIES } from '../constants';
 import { DatabaseService } from '../services/database.service';
@@ -19,13 +19,17 @@ export async function syncLogsDb(db: DatabaseService) {
   );
   for (const row of result.rows) {
     try {
-      const filehandle = fs.openSync(`${row.path}`, 'r');
-      fs.closeSync(filehandle);
+      const filehandle = await fs.open(row.path, 'r');
+      await filehandle.close();
     } catch (err) {
       console.log(
         `janitor: delete database row ${row.id}; file missing: ${row.path}`,
       );
-      await db.deleteLog(row.id);
+      try {
+        await db.deleteLog(row.id);
+      } catch (dbErr) {
+        console.error(`Failed to delete log ${row.id}:`, dbErr);
+      }
     }
   }
 }
@@ -46,17 +50,21 @@ export async function removeOldLogs(db: DatabaseService) {
     `,
     [DB_FILE_STATUS.CopiedToObjectStore],
   );
+
   for (const row of result.rows) {
-    if (nameHash[row.basename]) {
-      nameHash[row.basename]++;
-    } else {
-      nameHash[row.basename] = 1;
-    }
+    nameHash[row.basename] = (nameHash[row.basename] || 0) + 1;
 
     if (nameHash[row.basename] > JANITOR_COPIES) {
       console.log(`Delete: ${row.path}`);
-      await db.deleteLog(row.id);
-      fs.rmSync(row.path);
+      try {
+        await db.deleteLog(row.id);
+        await fs.rm(row.path);
+      } catch (error) {
+        console.error(
+          `Error deleting log ${row.id} or file ${row.path}:`,
+          error,
+        );
+      }
     }
   }
 }

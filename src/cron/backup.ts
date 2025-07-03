@@ -219,8 +219,10 @@ async function computeHash(filepath: string) {
   const hash = crypto.createHash('sha256');
   // Connect the output of the `input` stream to the input of `hash`
   // and let Node.js do the streaming
-  await stream.pipeline(input, hash);
-  input.close();
-
+  try {
+    await stream.pipeline(input, hash);
+  } finally {
+    input.close(); // Ensures the stream is closed even on error
+  }
   return hash.digest('hex');
 }

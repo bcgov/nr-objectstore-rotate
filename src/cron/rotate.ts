@@ -15,9 +15,11 @@ import { DatabaseService } from '../services/database.service';
 
 export async function rotateLogs(db: DatabaseService) {
   console.log('rotate: start');
+
   const files = fs.readdirSync(LOGROTATE_DIRECTORY);
   const now = new Date().getTime();
   let logFiles = files.filter((file) => file.endsWith(LOGROTATE_SUFFIX));
+
   logFiles = logFiles.filter((file) => {
     const stats = fs.statSync(path.join(LOGROTATE_DIRECTORY, file));
     const endTime = stats.ctime.getTime() + LOGROTATE_AGE_MAX;
@@ -59,7 +61,12 @@ export async function rotateLogs(db: DatabaseService) {
   } else {
     console.log('rotate: no files to rotate');
   }
-  await db.bulkStatusChange(DB_FILE_STATUS.Moved, DB_FILE_STATUS.Rotated);
+
+  try {
+    await db.bulkStatusChange(DB_FILE_STATUS.Moved, DB_FILE_STATUS.Rotated);
+  } catch (error) {
+    console.error('Failed to update database status:', error);
+  }
 }
 
 async function rotateLog(db: DatabaseService, file: string) {
