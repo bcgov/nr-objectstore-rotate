@@ -17,7 +17,7 @@ export async function syncLogsDb(db: DatabaseService) {
     ORDER BY id DESC
     `,
   );
-  for (const row of result.rows) {
+  for (const row of result) {
     try {
       const filehandle = await fs.open(row.path, 'r');
       await filehandle.close();
@@ -51,7 +51,7 @@ export async function removeOldLogs(db: DatabaseService) {
     [DB_FILE_STATUS.CopiedToObjectStore],
   );
 
-  for (const row of result.rows) {
+  for (const row of result) {
     nameHash[row.basename] = (nameHash[row.basename] || 0) + 1;
 
     if (nameHash[row.basename] > JANITOR_COPIES) {

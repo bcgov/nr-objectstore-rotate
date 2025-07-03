@@ -1,5 +1,5 @@
 import * as path from 'path';
-import sqlite3 from 'sqlite3';
+import Database from 'better-sqlite3';
 import {
   LOGROTATE_DIRECTORY,
   LOGROTATE_STATUSFILE,
@@ -9,19 +9,14 @@ import {
 const databasePath = path.join(LOGROTATE_DIRECTORY, LOGROTATE_STATUSFILE);
 
 export class DatabaseService {
-  private constructor(private db: sqlite3.Database) {}
+  private db = new Database(databasePath);
 
   /**
    * Factory
    * @returns DatabaseService
    */
   static async create() {
-    const service = await new Promise<DatabaseService>((resolve, reject) => {
-      const db = new sqlite3.Database(databasePath, (error: Error | null) => {
-        if (error) reject(error);
-        else resolve(new DatabaseService(db));
-      });
-    });
+    const service = new DatabaseService();
     await service.init();
     return service;
   }
@@ -96,29 +91,17 @@ export class DatabaseService {
   }
 
   run(sql: string, params: any = []) {
-    return new Promise<void>((resolve, reject) => {
-      this.db.run(sql, params, (error) => {
-        if (error) reject(error);
-        else resolve();
-      });
-    });
+    const statement = this.db.prepare(sql);
+    return Promise.resolve(statement.run(params));
   }
 
   all<T>(sql: string, params: any = []) {
-    return new Promise<{ rows: T[] }>((resolve, reject) => {
-      this.db.all<T>(sql, params, (error, rows) => {
-        if (error) reject(error);
-        else resolve({ rows });
-      });
-    });
+    const statement = this.db.prepare(sql);
+    return Promise.resolve(statement.all(params) as T[]);
   }
 
   close() {
-    return new Promise<void>((resolve, reject) => {
-      this.db.close((error: Error | null) => {
-        if (error) reject(error);
-        else resolve();
-      });
-    });
+    this.db.close();
+    return Promise.resolve();
   }
 }

@@ -1,5 +1,5 @@
 ARG REPO_LOCATION=
-FROM ${REPO_LOCATION}node:22-alpine as builder
+FROM ${REPO_LOCATION}node:22-alpine AS builder
 
 ### --------------------------------- Build
 # Install packages and build

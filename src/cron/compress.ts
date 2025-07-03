@@ -19,7 +19,7 @@ export async function compress(db: DatabaseService) {
     `,
     [DB_FILE_STATUS.Rotated],
   );
-  for (const row of result.rows) {
+  for (const row of result) {
     const compressedFilePath = `${row.path}.tgz`;
 
     try {
