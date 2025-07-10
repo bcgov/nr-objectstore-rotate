@@ -25,6 +25,7 @@ import {
   VAULT_CRED_KEYS_END_POINT,
   VAULT_CRED_KEYS_SECRET_KEY,
   VAULT_CRED_PATH,
+  OBJECT_STORAGE_PART_SIZE,
 } from '../constants';
 import { DatabaseService } from '../services/database.service';
 import VaultService from '../broker/vault.service';
@@ -189,6 +190,16 @@ async function backupWithSecret(
   const files: LogArtifact[] = [];
   for (const row of dbFileRows) {
     try {
+      const { size } = fs.statSync(row.path);
+      client.putObject(
+        bucket,
+        `${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(row.path)}`,
+        fs.createReadStream(row.path, {
+          highWaterMark: OBJECT_STORAGE_PART_SIZE,
+        }),
+        size,
+        objectstorageMetadata ?? {},
+      );
       const response = await client.fPutObject(
         bucket,
         `${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(row.path)}`,
