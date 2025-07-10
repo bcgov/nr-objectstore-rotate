@@ -31,6 +31,9 @@ export const OBJECT_STORAGE_ENABLED =
   process.env.OBJECT_STORAGE_ENABLED !== undefined
     ? process.env.OBJECT_STORAGE_ENABLED == 'true'
     : true;
+export const OBJECT_STORAGE_PART_SIZE = process.env.OBJECT_STORAGE_PART_SIZE
+  ? Number.parseInt(process.env.OBJECT_STORAGE_PART_SIZE)
+  : 5 * 1024 * 1024; // 5 MB
 export const OBJECT_STORAGE_END_POINT =
   process.env.OBJECT_STORAGE_END_POINT ?? '';
 export const OBJECT_STORAGE_ACCESS_KEY =
