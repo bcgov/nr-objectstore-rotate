@@ -5,6 +5,7 @@ export const CRON_JANITOR = process.env.CRON_JANITOR ?? '*/10 * * * *';
 
 export const RUN_ONCE = process.env.RUN_ONCE === 'true';
 export const COMPRESS_SKIP = process.env.COMPRESS_SKIP === 'true';
+export const MONITOR_MEMORY_USAGE = process.env.MONITOR_MEMORY_USAGE === 'true';
 
 export const LOGROTATE_DIRECTORY = process.env.LOGROTATE_DIRECTORY ?? 'logs';
 export const LOGROTATE_STATUSFILE =

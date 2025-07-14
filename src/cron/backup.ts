@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as crypto from 'crypto';
 import * as stream from 'stream/promises';
 
-import { getClient } from '../services/minio';
+import { getClient } from '../services/aws';
 import {
   BROKER_ENVIRONMENT,
   BROKER_JWT,
@@ -30,7 +30,7 @@ import {
 import { DatabaseService } from '../services/database.service';
 import VaultService from '../broker/vault.service';
 import BrokerService from '../broker/broker.service';
-import { ItemBucketMetadata } from 'minio';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 
 interface LogStatus {
   id: number;
@@ -47,7 +47,7 @@ interface LogArtifact {
 }
 
 type FileUpdateCallback = (id: number) => Promise<any>;
-const objectstorageMetadata: ItemBucketMetadata =
+const objectstorageMetadata: Record<string, string> | undefined =
   OBJECT_STORAGE_METADATA !== ''
     ? JSON.parse(OBJECT_STORAGE_METADATA)
     : undefined;
@@ -189,33 +189,30 @@ async function backupWithSecret(
   const client = getClient(endPoint, accessKey, secretKey);
   const files: LogArtifact[] = [];
   for (const row of dbFileRows) {
+    const checksum = await computeHash(row.path);
     try {
-      const { size } = fs.statSync(row.path);
-      client.putObject(
-        bucket,
-        `${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(row.path)}`,
-        fs.createReadStream(row.path, {
-          highWaterMark: OBJECT_STORAGE_PART_SIZE,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const response = await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: `${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(row.path)}`,
+          Body: fs.createReadStream(row.path, {
+            highWaterMark: OBJECT_STORAGE_PART_SIZE,
+          }),
+          Metadata: objectstorageMetadata ?? {},
+          ChecksumAlgorithm: 'SHA256',
+          ChecksumSHA256: checksum,
         }),
-        size,
-        objectstorageMetadata ?? {},
       );
-      const response = await client.fPutObject(
-        bucket,
-        `${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(row.path)}`,
-        row.path,
-        objectstorageMetadata ?? {},
-      );
-      console.log(response);
+      // console.log(response);
     } catch (err) {
       const info = { file: row.path, message: err };
       console.log(info);
       continue;
     }
-    const checksum = `sha256:${await computeHash(row.path)}`;
     files.push({
       id: row.id,
-      checksum,
+      checksum: `sha256:${checksum}`,
       name: path.basename(row.path),
       size: fs.statSync(row.path).size,
       type: 'tgz',
@@ -226,7 +223,9 @@ async function backupWithSecret(
 }
 
 async function computeHash(filepath: string) {
-  const input = fs.createReadStream(filepath);
+  const input = fs.createReadStream(filepath, {
+    highWaterMark: OBJECT_STORAGE_PART_SIZE,
+  });
   const hash = crypto.createHash('sha256');
   // Connect the output of the `input` stream to the input of `hash`
   // and let Node.js do the streaming

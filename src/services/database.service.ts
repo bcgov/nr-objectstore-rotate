@@ -9,7 +9,7 @@ import {
 const databasePath = path.join(LOGROTATE_DIRECTORY, LOGROTATE_STATUSFILE);
 
 export class DatabaseService {
-  private db = new Database(databasePath);
+  private db = new Database(databasePath, { fileMustExist: false });
 
   /**
    * Factory

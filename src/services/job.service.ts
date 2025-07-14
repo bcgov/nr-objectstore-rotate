@@ -5,6 +5,7 @@ import {
   CRON_COMPRESS,
   CRON_JANITOR,
   CRON_ROTATE,
+  MONITOR_MEMORY_USAGE,
 } from '../constants';
 import { backup } from '../cron/backup';
 import { rotateLogs } from '../cron/rotate';
@@ -65,27 +66,57 @@ export class JobService {
   }
 
   private async rotate() {
+    if (MONITOR_MEMORY_USAGE) {
+      console.log('rotate ------------ start');
+      console.log(process.memoryUsage());
+    }
     await rotateLogs(this.db);
     runGarbageCollection();
+    if (MONITOR_MEMORY_USAGE) {
+      console.log('rotate ------------ end');
+      console.log(process.memoryUsage());
+    }
   }
 
   private async compress() {
-    console.log('start compress');
+    console.log('compress ----------- start');
+    if (MONITOR_MEMORY_USAGE) {
+      console.log(process.memoryUsage());
+    }
     await syncLogsDb(this.db);
     await compress(this.db);
     runGarbageCollection();
+    if (MONITOR_MEMORY_USAGE) {
+      console.log(process.memoryUsage());
+    }
+    console.log('compress ----------- end');
   }
 
   private async backup() {
-    console.log('start backup');
+    console.log('backup ------------ start');
+    if (MONITOR_MEMORY_USAGE) {
+      console.log(process.memoryUsage());
+    }
     await syncLogsDb(this.db);
     await backup(this.db);
     runGarbageCollection();
+    if (MONITOR_MEMORY_USAGE) {
+      console.log(process.memoryUsage());
+    }
+    console.log('backup ------------ end');
   }
 
   private async janitor() {
+    if (MONITOR_MEMORY_USAGE) {
+      console.log('janitor ----------- start');
+      console.log(process.memoryUsage());
+    }
     await syncLogsDb(this.db);
     await removeOldLogs(this.db);
     runGarbageCollection();
+    if (MONITOR_MEMORY_USAGE) {
+      console.log(process.memoryUsage());
+      console.log('janitor ----------- end');
+    }
   }
 }
