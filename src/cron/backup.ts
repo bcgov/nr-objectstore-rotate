@@ -1,9 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import * as crypto from 'crypto';
-import * as stream from 'stream/promises';
 
-import { getClient } from '../services/aws';
 import {
   BROKER_ENVIRONMENT,
   BROKER_JWT,
@@ -25,12 +22,11 @@ import {
   VAULT_CRED_KEYS_END_POINT,
   VAULT_CRED_KEYS_SECRET_KEY,
   VAULT_CRED_PATH,
-  OBJECT_STORAGE_PART_SIZE,
 } from '../constants';
 import { DatabaseService } from '../services/database.service';
 import VaultService from '../broker/vault.service';
 import BrokerService from '../broker/broker.service';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { exec } from 'child_process';
 
 interface LogStatus {
   id: number;
@@ -186,23 +182,18 @@ async function backupWithSecret(
   secretKey: string,
   bucket: string,
 ): Promise<LogArtifact[]> {
-  const client = getClient(endPoint, accessKey, secretKey);
   const files: LogArtifact[] = [];
   for (const row of dbFileRows) {
-    const checksum = await computeHash(row.path);
+    let checksum: string;
     try {
+      checksum = await computeHash(row.path);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const response = await client.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: `${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(row.path)}`,
-          Body: fs.createReadStream(row.path, {
-            highWaterMark: OBJECT_STORAGE_PART_SIZE,
-          }),
-          Metadata: objectstorageMetadata ?? {},
-          ChecksumAlgorithm: 'SHA256',
-          ChecksumSHA256: checksum,
-        }),
+      const response = await uploadFile(
+        row.path,
+        endPoint,
+        accessKey,
+        secretKey,
+        bucket,
       );
       // console.log(response);
     } catch (err) {
@@ -222,17 +213,69 @@ async function backupWithSecret(
   return files;
 }
 
-async function computeHash(filepath: string) {
-  const input = fs.createReadStream(filepath, {
-    highWaterMark: OBJECT_STORAGE_PART_SIZE,
+async function uploadFile(
+  filepath: string,
+  endPoint: string,
+  accessKey: string,
+  secretKey: string,
+  bucket: string,
+) {
+  return new Promise<string>((resolve, reject) => {
+    const metadata = objectstorageMetadata
+      ? Object.entries(objectstorageMetadata).map((key, value) => {
+          return `--metadata "${key}=${value}"`;
+        })
+      : '';
+    const cmd = `s5cmd cp ${metadata} '${filepath}' 's3://${bucket}/${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(
+      filepath,
+    )}'`;
+    console.log(`s3: ${cmd}`);
+    exec(
+      cmd,
+      {
+        env: {
+          S3_ENDPOINT_URL: endPoint,
+          AWS_ACCESS_KEY_ID: accessKey,
+          AWS_SECRET_ACCESS_KEY: secretKey,
+        },
+      },
+      async (error, stdout, stderr) => {
+        if (error) {
+          // node couldn't run the command
+          reject(error);
+          return;
+        }
+        // Using process.stdout.write to prevent double new lines.
+        if (stdout) {
+          process.stdout.write(`s3: [stdout] ${stdout}`);
+        }
+        if (stderr) {
+          process.stdout.write(`s3: [stderr] ${stderr}`);
+        }
+        resolve(stdout);
+      },
+    );
   });
-  const hash = crypto.createHash('sha256');
-  // Connect the output of the `input` stream to the input of `hash`
-  // and let Node.js do the streaming
-  try {
-    await stream.pipeline(input, hash);
-  } finally {
-    input.close(); // Ensures the stream is closed even on error
-  }
-  return hash.digest('hex');
+}
+
+async function computeHash(filepath: string) {
+  return new Promise<string>((resolve, reject) => {
+    const cmd = `sha256sum '${filepath}'`;
+    // console.log(`hash: ${cmd}`);
+    exec(cmd, async (error, stdout, stderr) => {
+      if (error) {
+        // node couldn't run the command
+        reject(error);
+        return;
+      }
+      // Using process.stdout.write to prevent double new lines.
+      if (stdout) {
+        process.stdout.write(`hash: [stdout] ${stdout}`);
+      }
+      if (stderr) {
+        process.stdout.write(`hash: [stderr] ${stderr}`);
+      }
+      resolve(stdout.split(' ')[0].trim());
+    });
+  });
 }
