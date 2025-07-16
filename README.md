@@ -1,6 +1,6 @@
 # NR Object Storage Rotate
 
-A sidecar container for rotating, compressing and backing up log files to object storage.
+A sidecar container for rotating, compressing and backing up log files to s3 compatible object storage.
 
 ## Architecture
 
@@ -108,6 +108,8 @@ For each value you want to use from Vault, you must configure a mapping. The `VA
 You are free to set as many (or as few) of the `VAULT_CRED_KEYS_*`.
 
 ## Local Testing with Node
+
+Prerequisite: Install [Node.js](https://nodejs.org) and [s5cmd](https://github.com/peak/s5cmd/blob/master/README.md)
 
 1. Copy `setenv-tmpl.sh` to `setenv-local.sh`. (`cp setenv-tmpl.sh setenv-local.sh`)
 2. Modify cron to run every minute ("*/1 * * * *").
