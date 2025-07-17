@@ -19,6 +19,7 @@ export OBJECT_STORAGE_END_POINT=""
 export OBJECT_STORAGE_ACCESS_KEY=""
 export OBJECT_STORAGE_SECRET_KEY=""
 export OBJECT_STORAGE_BUCKET=""
+export OBJECT_STORAGE_COMMAND="/usr/local/bin/s5cmd"
 # export OBJECT_STORAGE_FILENAME_PREFIX=""
 
 # Set BROKER_* and VAULT_* values to use NR Broker and Vault
