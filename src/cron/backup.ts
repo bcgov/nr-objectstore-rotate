@@ -12,6 +12,7 @@ import {
   COMPRESS_SKIP,
   OBJECT_STORAGE_ACCESS_KEY,
   OBJECT_STORAGE_BUCKET,
+  OBJECT_STORAGE_COMMAND,
   OBJECT_STORAGE_ENABLED,
   OBJECT_STORAGE_END_POINT,
   OBJECT_STORAGE_FILENAME_PREFIX,
@@ -226,7 +227,7 @@ async function uploadFile(
           return `--metadata "${key}=${value}"`;
         })
       : '';
-    const cmd = `s5cmd cp ${metadata} '${filepath}' 's3://${bucket}/${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(
+    const cmd = `${OBJECT_STORAGE_COMMAND} cp ${metadata} '${filepath}' 's3://${bucket}/${OBJECT_STORAGE_FILENAME_PREFIX}${path.basename(
       filepath,
     )}'`;
     console.log(`s3: ${cmd}`);

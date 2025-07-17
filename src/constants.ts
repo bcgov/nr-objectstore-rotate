@@ -49,6 +49,8 @@ export const OBJECT_STORAGE_FILENAME_PREFIX = process.env
 // Optional key/value JSON object with metadata
 export const OBJECT_STORAGE_METADATA =
   process.env.OBJECT_STORAGE_METADATA ?? '';
+export const OBJECT_STORAGE_COMMAND =
+  process.env.OBJECT_STORAGE_COMMAND ?? '/usr/local/bin/s5cmd';
 
 // Optional - Fetch OBJECT_STORAGE_SECRET_KEY from Vault using NR Broker
 export const BROKER_URL =
