@@ -1,5 +1,5 @@
 import * as path from 'path';
-import Database from 'better-sqlite3';
+import { DatabaseSync, SQLInputValue } from 'node:sqlite';
 import {
   LOGROTATE_DIRECTORY,
   LOGROTATE_STATUSFILE,
@@ -9,46 +9,41 @@ import {
 const databasePath = path.join(LOGROTATE_DIRECTORY, LOGROTATE_STATUSFILE);
 
 export class DatabaseService {
-  private db = new Database(databasePath, { fileMustExist: false });
+  private db = new DatabaseSync(databasePath);
 
   /**
    * Factory
    * @returns DatabaseService
    */
-  static async create() {
+  static create() {
     const service = new DatabaseService();
-    await service.init();
+    service.init();
     return service;
   }
 
   /**
    * Initializes the database
    */
-  async init() {
-    await this.createTables();
+  private init() {
+    this.createTables();
   }
 
   /**
    * Creates table if it does not exist
-   * @returns Promise
    */
-  private async createTables() {
-    await this.run(`
-    CREATE TABLE IF NOT EXISTS logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      basename TEXT,
-      path TEXT,
-      status INT
+  private createTables() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        basename TEXT,
+        path TEXT,
+        status INT
       )
-      `);
+    `);
   }
 
   /**
    * Add log into table
-   * @param basename
-   * @param path
-   * @param status
-   * @returns
    */
   addLog(basename: string, path: string, status = DB_FILE_STATUS.Moved) {
     return this.run(
@@ -59,23 +54,16 @@ export class DatabaseService {
 
   /**
    * Update the status of a log
-   * @param id
-   * @param status
-   * @returns Promise<void>
    */
   updatelogStatus(id: number, status: DB_FILE_STATUS) {
-    return this.run(
-      `
-      UPDATE logs
-      SET status = ?
-      WHERE id = ?
-      `,
-      [status, id],
-    );
+    return this.run(`UPDATE logs SET status = ? WHERE id = ?`, [status, id]);
   }
 
+  /**
+   * Bulk status change
+   */
   bulkStatusChange(fromStatus: DB_FILE_STATUS, toStatus: DB_FILE_STATUS) {
-    return this.run('UPDATE logs SET status = ? WHERE status = ?', [
+    return this.run(`UPDATE logs SET status = ? WHERE status = ?`, [
       toStatus,
       fromStatus,
     ]);
@@ -83,25 +71,32 @@ export class DatabaseService {
 
   /**
    * Delete log
-   * @param id
-   * @returns
    */
   deleteLog(id: number) {
-    return this.run('DELETE FROM logs WHERE id = ?', [id]);
+    return this.run(`DELETE FROM logs WHERE id = ?`, [id]);
   }
 
-  run(sql: string, params: any = []) {
-    const statement = this.db.prepare(sql);
-    return Promise.resolve(statement.run(params));
+  /**
+   * Run SQL
+   */
+  run(sql: string, anonymousParameters: SQLInputValue[] = []) {
+    const statment = this.db.prepare(sql);
+    statment.run(...anonymousParameters);
+    return Promise.resolve();
   }
 
-  all<T>(sql: string, params: any = []) {
-    const statement = this.db.prepare(sql);
-    return Promise.resolve(statement.all(params) as T[]);
+  /**
+   * Get all rows
+   */
+  all<T>(sql: string, anonymousParameters: SQLInputValue[] = []): Promise<T[]> {
+    const statment = this.db.prepare(sql);
+    return Promise.resolve(statment.all(...anonymousParameters) as T[]);
   }
 
+  /**
+   * Close DB
+   */
   close() {
     this.db.close();
-    return Promise.resolve();
   }
 }
