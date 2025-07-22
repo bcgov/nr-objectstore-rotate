@@ -1,5 +1,5 @@
 ARG REPO_LOCATION=
-FROM ${REPO_LOCATION}node:22-alpine AS builder
+FROM ${REPO_LOCATION}node:24-alpine AS builder
 
 ### --------------------------------- Install s5cmd
 # Install curl, download and extract s5cmd binary
@@ -22,7 +22,7 @@ RUN npm ci --no-audit && \
     npm ci --omit=dev --no-audit
 
 # Deployment container
-FROM ${REPO_LOCATION}node:22-alpine
+FROM ${REPO_LOCATION}node:24-alpine
 
 # LABEL org.opencontainers.image.description="NR Broker handles the business logic of authenticating and validating requests for automated processes to access secrets"
 # LABEL org.opencontainers.image.licenses=Apache-2.0
