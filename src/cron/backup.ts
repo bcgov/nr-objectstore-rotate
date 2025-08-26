@@ -238,6 +238,15 @@ async function uploadFile(
           S3_ENDPOINT_URL: endPoint,
           AWS_ACCESS_KEY_ID: accessKey,
           AWS_SECRET_ACCESS_KEY: secretKey,
+          ...(process.env.HTTP_PROXY
+            ? { HTTP_PROXY: process.env.HTTP_PROXY ?? '' }
+            : {}),
+          ...(process.env.HTTPS_PROXY
+            ? { HTTPS_PROXY: process.env.HTTPS_PROXY ?? '' }
+            : {}),
+          ...(process.env.NO_PROXY
+            ? { NO_PROXY: process.env.NO_PROXY ?? '' }
+            : {}),
         },
       },
       async (error, stdout, stderr) => {
